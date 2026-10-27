@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Gebakken Lucht</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --sky-top:#8ecbe8; --sky-bottom:#e9f7ee; --ink:#26323a; --paper:#fffdf6;
+    --yellow:#ffd23f; --green:#4caf7d; --red:#e6534d; --blue:#4f8fdd; --grey:#9aa5ab; --purple:#9b6bd6;
+    --shadow: 4px 4px 0 var(--ink);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Trebuchet MS','Verdana',sans-serif; color:var(--ink);
+    background: linear-gradient(180deg,var(--sky-top) 0%, var(--sky-bottom) 55%, #dff0e2 100%);
+    min-height:100vh; padding:14px; position:relative; overflow-x:hidden;
+  }
+  .cloud{ position:fixed; opacity:0.8; z-index:0; pointer-events:none; animation: drift linear infinite; }
+  @keyframes drift{ from{ transform:translateX(-10vw);} to{ transform:translateX(110vw);} }
+  .pixel-cloud{ width:60px;height:28px;
+    background: linear-gradient(#fff,#fff) 10px 0/40px 10px, linear-gradient(#fff,#fff) 0 10px/60px 12px, linear-gradient(#fff,#fff) 16px 22px/28px 6px;
+    background-repeat:no-repeat; }
+
+  .wrap{max-width:1040px;margin:0 auto;position:relative;z-index:1;}
+
+  .titlebar{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;
+    background:var(--paper); border:3px solid var(--ink); box-shadow:var(--shadow); padding:14px 18px; margin-bottom:12px; }
+  .logo h1{ margin:0; font-size:26px; letter-spacing:1px; text-shadow: 2px 2px 0 var(--yellow); }
+  .logo p{margin:4px 0 0; font-size:12px; color:#54636b; font-style:italic;}
+  .logo .companylevel{ margin-top:5px; font-size:11px; font-weight:bold; color:#3a6b52; }
+  .statboxes{display:flex; gap:8px; flex-wrap:wrap;}
+  .coinbox{ background:var(--yellow); border:3px solid var(--ink); box-shadow:var(--shadow); padding:8px 14px; text-align:right; min-width:140px; }
+  .coinbox .amt{font-size:20px; font-weight:bold;}
+  .coinbox .rate{font-size:11px; color:#5a4a00;}
+  .coinbox .daybox{font-size:10.5px;margin-top:3px;color:#5a4a00;}
+  .recordbox{ background:#ffe9b0; border:3px solid var(--ink); box-shadow:var(--shadow); padding:8px 14px; text-align:right; min-width:150px; }
+  .recordbox .amt{font-size:18px; font-weight:bold; color:#8a5a00;}
+  .recordbox .rate{font-size:10.5px; color:#8a5a00;}
+
+  .meter-card{ background:var(--paper); border:3px solid var(--ink); box-shadow:var(--shadow); padding:12px 16px; margin-bottom:12px; transition: border-color 0.3s; }
+  .meter-card.radioactive-glow{ animation: radioglow 1.6s ease-in-out infinite; border-color:#3fd93f; }
+  .meter-card.doomsday-critical{ animation: dangerglow 1s ease-in-out infinite; border-color:var(--red); }
+  @keyframes radioglow{ 0%,100%{ box-shadow: 4px 4px 0 var(--ink), 0 0 6px 2px #4dff4d66; } 50%{ box-shadow: 4px 4px 0 var(--ink), 0 0 26px 8px #4dff4dcc; } }
+  @keyframes dangerglow{ 0%,100%{ box-shadow: 4px 4px 0 var(--ink), 0 0 6px 2px #ff4d4d66; } 50%{ box-shadow: 4px 4px 0 var(--ink), 0 0 26px 8px #ff4d4dcc; } }
+  .meter-top{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px;}
+  .meter-top h3{margin:0; font-size:14px;}
+  .meter-label{font-size:12.5px; font-weight:bold;}
+  .meter-track{ margin-top:8px; height:22px; border:2px solid var(--ink);
+    background: repeating-linear-gradient(90deg, var(--red) 0 20%, #ef9d4d 20% 40%, var(--yellow) 40% 60%, #9fd66a 60% 80%, var(--green) 80% 100%);
+    position:relative; overflow:hidden; }
+  .meter-fill{ position:absolute; top:0; right:0; height:100%; background: rgba(255,255,255,0.72); border-left:2px solid var(--ink); transition: width 0.4s ease; }
+  .doomsday-track{ margin-top:8px; height:22px; border:2px solid var(--ink); background:#e2e2e2; overflow:hidden; }
+  .doomsday-fill{ height:100%; transition: width 0.4s ease, background 0.4s ease; }
+  .meter-note{font-size:10px; color:#6c7a80; margin-top:6px;}
+
+  .tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+  .tab-btn{ font-family:inherit; font-size:12px; font-weight:bold; background:#fff; border:3px solid var(--ink); box-shadow:3px 3px 0 var(--ink); padding:7px 11px; cursor:pointer; color:var(--ink); }
+  .tab-btn.active{background:var(--blue); color:#fff;}
+  .tab-btn:hover{filter:brightness(1.05);}
+
+  .buybar{ display:flex; align-items:center; gap:6px; margin-bottom:10px; font-size:11.5px; font-weight:bold; flex-wrap:wrap; }
+  .buybar-btn{ font-family:inherit; font-size:11.5px; font-weight:bold; background:#fff; border:2px solid var(--ink); padding:4px 10px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+  .buybar-btn.active{ background:var(--green); color:#fff; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+
+  .card{ background:var(--paper); border:3px solid var(--ink); box-shadow:var(--shadow); padding:12px; position:relative; }
+  .card.locked{opacity:0.5;}
+  .card h4{margin:0 0 4px; font-size:13.5px; display:flex; align-items:center; gap:6px;}
+  .card .icon{font-size:20px;}
+  .card .desc{font-size:10.5px; color:#5a6a71; margin-bottom:6px; min-height:22px;}
+  .card .stat-line{ font-size:10px; color:#1a5a8a; background:#eef6ff; border:1px solid #cfe4f7; padding:3px 5px; margin-bottom:6px; }
+  .card button{ width:100%; margin-top:6px; font-family:inherit; font-weight:bold; font-size:11.5px; padding:7px; border:2.5px solid var(--ink); background:var(--green); color:#fff; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+  .card button.dump{ background:var(--red); }
+  .card button:disabled{background:var(--grey); cursor:not-allowed; opacity:0.7;}
+  .card .locktag{font-size:10px; color:#a03; margin-top:4px;}
+  .card .level-tag{ position:absolute; top:8px; right:10px; font-size:10.5px; background:var(--ink); color:#fff; padding:2px 6px; }
+
+  .tank-card{ background:var(--paper); border:3px solid var(--ink); box-shadow:var(--shadow); padding:14px; margin-bottom:12px; }
+  .tank-bar-outer{ height:34px; border:3px solid var(--ink); background:#e8f0f2; display:flex; overflow:hidden; }
+  .tank-seg{ height:100%; }
+  .verwerk-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px; flex-wrap:wrap; }
+  .verwerk-btn{ font-family:inherit; font-weight:bold; font-size:13px; padding:10px 18px; border:3px solid var(--ink); background:var(--red); color:#fff; cursor:pointer; box-shadow:4px 4px 0 var(--ink); }
+  .verwerk-btn:active{ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+  .verwerk-btn:disabled{ background:var(--grey); cursor:not-allowed; }
+  .verwerk-note{font-size:10.5px; color:#6c7a80; margin-top:8px;}
+  .legend{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px; margin-top:10px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:11px; background:#fff; border:1.5px solid #ccc; padding:4px 6px; }
+  .swatch{width:11px; height:11px; border:1px solid var(--ink); flex-shrink:0;}
+
+  .clicker-card{ text-align:center; padding:18px; background:var(--paper); border:3px solid var(--ink); box-shadow:var(--shadow); margin-bottom:12px; }
+  .click-btn{ font-family:inherit; font-weight:bold; font-size:19px; padding:22px 42px; border:4px solid var(--ink); background:var(--yellow); cursor:pointer; box-shadow:5px 5px 0 var(--ink); transition: transform 0.06s ease, box-shadow 0.06s ease; }
+  .click-btn:hover{ filter:brightness(1.05); }
+  .click-btn:active{ transform:translate(4px,4px); box-shadow:1px 1px 0 var(--ink); }
+  .click-info{ margin-top:10px; font-size:12px; color:#5a6a71; }
+
+  .titlebanner{ border:3px solid var(--ink); box-shadow:var(--shadow); padding:14px; text-align:center; margin-bottom:12px; }
+  .titlebanner .medal{font-size:34px;}
+  .titlebanner h2{margin:6px 0 2px; font-size:16px;}
+  .titlebanner p{margin:0; font-size:11px;}
+  .donate-buttons{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
+  .donate-buttons button{ font-family:inherit; font-weight:bold; font-size:12px; border:2.5px solid var(--ink); background:#fff; padding:9px 12px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+  .donate-buttons button:hover{background:var(--yellow);}
+  .trophyshelf{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .trophy{ width:60px; text-align:center; font-size:22px; padding:6px 4px; border:2px solid var(--ink); background:#fff; opacity:0.3; }
+  .trophy.unlocked{opacity:1; background:#fffbe0;}
+  .trophy span{display:block; font-size:8px; margin-top:2px;}
+
+  .prestige-card{ background:var(--paper); border:3px solid var(--ink); box-shadow:var(--shadow); padding:16px; margin-bottom:12px; text-align:center; }
+  .prestige-card h3{margin-top:0;}
+  .prestige-stat{font-size:12.5px; margin:4px 0;}
+  .ipo-btn{ font-family:inherit; font-weight:bold; font-size:14px; padding:12px 20px; border:3px solid var(--ink); background:var(--purple); color:#fff; cursor:pointer; box-shadow:4px 4px 0 var(--ink); margin-top:10px; margin-right:6px;}
+  .ipo-btn:disabled{ background:var(--grey); cursor:not-allowed; }
+
+  .ach-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; margin-top:10px; }
+  .ach-card{ background:#fff; border:2px solid var(--ink); padding:8px 10px; font-size:11px; opacity:0.4; }
+  .ach-card.unlocked{ opacity:1; background:#fffbe0; }
+  .ach-card h5{margin:0 0 3px; font-size:12px;}
+  .stat-list{ font-size:12.5px; line-height:1.9; }
+  .reset-btn{ font-family:inherit; font-weight:bold; font-size:12px; padding:8px 14px; border:2.5px solid var(--ink); background:var(--red); color:#fff; cursor:pointer; box-shadow:2px 2px 0 var(--ink); margin-top:10px; margin-right:6px; }
+
+  .news{ background:var(--ink); color:#fff; font-size:11.5px; padding:8px 12px; margin-bottom:12px; border:3px solid var(--ink); }
+  .news b{color:var(--yellow);}
+  .logbox{ background:#fff; border:3px solid var(--ink); box-shadow:var(--shadow); padding:8px 12px; font-size:10.5px; max-height:100px; overflow-y:auto; margin-bottom:12px; }
+  .logbox div{padding:2px 0; border-bottom:1px dashed #ddd;}
+  .section-title{font-size:13px; font-weight:bold; margin:14px 0 8px;}
+  footer{text-align:center; font-size:10px; color:#5a6a71; margin-top:18px; padding-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="titlebar">
+    <div class="logo">
+      <h1>🏭 Gebakken Lucht 💨</h1>
+      <p>Verzamel de hemel. Verkoop niets. Doneer alles — voor de klok afloopt.</p>
+      <div class="companylevel" id="companyLevel">Geen status</div>
+    </div>
+    <div class="statboxes">
+      <div class="recordbox">
+        <div class="amt" id="recordAmt">🏆 0 munten</div>
+        <div class="rate">Record (all-time)</div>
+      </div>
+      <div class="coinbox">
+        <div class="amt" id="coinAmt">100 munten</div>
+        <div class="rate" id="coinRate">+0 / dag</div>
+        <div class="daybox" id="dayLabel">Dag 1</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="news" id="news"><b>BIG AIR persbericht:</b> <span id="newsText">Welkom bij Gebakken Lucht™, uw partner in ademhaling.</span></div>
+
+  <div class="meter-card" id="meterCard">
+    <div class="meter-top">
+      <h3>🌍 Luchtkwaliteitsindex</h3>
+      <div class="meter-label" id="meterLabel">—</div>
+    </div>
+    <div class="meter-track"><div class="meter-fill" id="meterFill" style="width:50%;"></div></div>
+    <div class="meter-note">Berekend uit de werkelijke samenstelling van uw lucht. Radioactieve stoffen tellen even zwaar als andere vervuiling — maar geven wel een herkenbare gloed.</div>
+  </div>
+
+  <div class="meter-card" id="doomsdayCard">
+    <div class="meter-top">
+      <h3>🕐 Doomsday Klok</h3>
+      <div class="meter-label" id="doomsdayLabel">— dagen resterend</div>
+    </div>
+    <div class="doomsday-track"><div class="doomsday-fill" id="doomsdayFill" style="width:100%;background:var(--green);"></div></div>
+    <div class="meter-note" id="doomsdayNote">Slechte lucht versnelt de klok. Goede lucht vertraagt hem bijna tot stilstand. Bij 0 is het voorbij.</div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="panels"></div>
+  <div class="logbox" id="logbox"></div>
+  <footer>Gebakken Lucht — een satirisch spelletje over lucht, winst en gebakken lucht. Voortgang wordt automatisch bewaard. Uw record niet vergeten.</footer>
+</div>
+
+<script>
+/* ============================= CONSTANTEN ============================= */
+const TICK_MS = 1000;
+const DAY_LENGTH_TICKS = 15;
+const CLICK_BASE_O2 = 1;
+const CLICK_BASE_N2 = 0.4;
+const CLICK_BASE_AR = 0.05;
+const NORM_BADNESS = 10;
+const SAVE_KEY = "gebakken-lucht-save-v4";
+const CLOCK_START = 100;      // dagen op de Doomsday Klok bij een nieuwe poging
+const MIN_DECAY = 0.030;      // aftik per tick bij perfecte luchtkwaliteit (bijna stil)
+const MAX_DECAY = 0.6;        // aftik per tick bij luchtkwaliteit 0 (snel voorbij)
+
+/* ============================= STOFFEN ============================= */
+const SUBSTANCES = {
+  o2:   { name:"Zuurstof",       icon:"🫧", type:"clean", color:"#4f8fdd" },
+  n2:   { name:"Stikstof",       icon:"💨", type:"clean", color:"#9aa5ab" },
+  ar:   { name:"Argon",          icon:"🔵", type:"clean", color:"#6fd6c9" },
+  h2:   { name:"Waterstof",      icon:"✨", type:"clean", color:"#7fd6d6", locked:true },
+  he:   { name:"Helium",         icon:"🎈", type:"clean", color:"#ffb8ec", locked:true },
+  ne:   { name:"Neon",           icon:"💡", type:"clean", color:"#ffe08a", locked:true },
+  he3:  { name:"Helium-3",       icon:"🌕", type:"clean", color:"#ffd9a0", locked:true },
+  antimaterie:{name:"Antimaterie", icon:"⚛️", type:"clean", color:"#d98cff", locked:true },
+  golddust:{name:"Goudstof", icon:"🏆", type:"clean", color:"#bf9000" },
+
+  co2:  { name:"CO₂",            icon:"☁️", type:"dirty", dumpBase:10.00,  badness:3,  color:"#8a8f8f" },
+  nh3:  { name:"Ammoniak",       icon:"🐄", type:"dirty", dumpBase:15.00,  badness:5,  color:"#c9d66a" },
+  co:   { name:"Koolmonoxide",   icon:"🚗", type:"dirty", dumpBase:50.00,  badness:10,  color:"#b98a5a" },
+  ch4:  { name:"Methaan",        icon:"🟤", type:"dirty", dumpBase:40.00,  badness:7,  color:"#8a6a4f" },
+  so2:  { name:"Zwaveldioxide",  icon:"🌫️", type:"dirty", dumpBase:45.00,  badness:8,  color:"#c9a86b" },
+  kerosine:{ name:"Vliegtuigdamp", icon:"✈️", type:"dirty", dumpBase:1400.00, badness:80, color:"#7a8a9a", locked:true },
+  cl2:  { name:"Chloor",         icon:"🟢", type:"dirty", dumpBase:35.00,  badness:10,  color:"#a8d66a" },
+  roet: { name:"Fijnstof",       icon:"🌁", type:"dirty", dumpBase:32.00,  badness:8,  color:"#4a4a4a" },
+  microplastics:{ name:"Microplastics", icon:"🥤", type:"dirty", dumpBase:1600.00, badness:40, color:"#d9c85a", locked:true },
+  slib: { name:"Diepzeeslib",    icon:"🪨", type:"dirty", dumpBase:4200.00,  badness:22,  color:"#4a3a2a", locked:true },
+  c6h6: { name:"Benzeen",        icon:"🧪", type:"dirty", dumpBase:90.00,  badness:15,  color:"#c98a2f" },
+  ch2o: { name:"Formaldehyde",   icon:"🧴", type:"dirty", dumpBase:175.00,  badness:25,  color:"#d68a4a" },
+  hg:   { name:"Kwikdamp",       icon:"🌡️", type:"dirty", dumpBase:270.00,  badness:35,  color:"#b0b8c0" },
+  pfas: { name:"PFAS",           icon:"☣️", type:"dirty", dumpBase:1250.00,  badness:50,  color:"#7a4fc9" },
+  ruimtepuin:{ name:"Ruimtepuin", icon:"🛰️", type:"dirty", dumpBase:25000.00, badness:175, color:"#8a8ac9", locked:true },
+  dioxine:{ name:"Dioxine",      icon:"☠️", type:"dirty", dumpBase:1750.0,  badness:400, color:"#5a1a1a" },
+  orbitaalpuin:{ name:"Orbitaal Puin", icon:"🌌", type:"dirty", dumpBase:60000.0, badness:200, color:"#5a5ad9", locked:true },
+  radon:{ name:"Radon",          icon:"☢️", type:"dirty", dumpBase:8000.0,  badness:100,  color:"#7fbf6a", radioactive:true, locked:true },
+  ur:   { name:"Uranium",        icon:"☢️", type:"dirty", dumpBase:12000.0,  badness:150,  color:"#8fbf6a", radioactive:true, locked:true },
+  pu:   { name:"Plutonium",      icon:"☢️", type:"dirty", dumpBase:14000.0, badness:400, color:"#5fbf6a", radioactive:true, locked:true },
+  cs137:{ name:"Cesium-137",     icon:"☢️", type:"dirty", dumpBase:50000.0, badness:1000, color:"#22c96a", radioactive:true, locked:true },
+};
+
+/* ============================= UPGRADES ============================= */
+/* Kosten groeien EXPONENTIEEL: kosten(niveau) = baseCost * growth^niveau.
+   Dit voorkomt dat één klik duizenden niveaus tegelijk koopt. */
+const UPGRADES = [
+  // ---------- INDUSTRIE ----------
+  { id:"collector", cat:"industrie", name:"Luchtcollector", icon:"🌬️",
+    desc:"Filtert ambient lucht tot bruikbare gassen.",
+    stat:"Per niveau: +0.40 Zuurstof, +0.25 Stikstof, +0.03 Argon per tick.",
+    baseCost:15, growth:1.12,
+    effect:(lvl,s)=>{ s.o2.rate+=0.40*lvl; s.n2.rate+=0.25*lvl; s.ar.rate+=0.03*lvl; } },
+  { id:"factory", cat:"industrie", name:"Fabriek", icon:"🏭",
+    desc:"Produceert winst. En rook. Vooral rook.",
+    stat:"Per niveau: +0.6 munten/tick (× industrievermenigvuldiger), +0.30 CO₂/tick.",
+    baseCost:40, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 0.6*lvl*st.industryMult; s.co2.rate += 0.30*lvl; } },
+  { id:"wind", cat:"industrie", name:"Windmolenpark", icon:"🍃",
+    desc:"Écht schone energie. Geen bijproduct — op klagende vogelspotters na.",
+    stat:"Per niveau: +1 munt/tick. Geen bijproduct.",
+    baseCost:90, growth:1.05,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 1*lvl*st.industryMult; } },
+  { id:"fertilizer", cat:"industrie", name:"Kunstmestfabriek", icon:"🌾", prereq:{id:"factory",lvl:2},
+    desc:"Kunstmest voor de akkers. Ammoniak voor de lucht.",
+    stat:"Per niveau: +1.6 munten/tick, +0.40 Ammoniak/tick.",
+    baseCost:100, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 1.6*lvl*st.industryMult; s.nh3.rate += 0.40*lvl; } },
+  { id:"livestock", cat:"industrie", name:"Veehouderij", icon:"🐄", prereq:{id:"factory",lvl:2},
+    desc:"Koeien boeren. Letterlijk. Methaan is de bekendste broeikasgas-mythe die toch waar is.",
+    stat:"Per niveau: +1.8 munten/tick, +0.45 Methaan/tick.",
+    baseCost:110, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 1.8*lvl*st.industryMult; s.ch4.rate += 0.45*lvl; } },
+  { id:"generators", cat:"industrie", name:"Noodgeneratoren", icon:"⚡", prereq:{id:"factory",lvl:3},
+    desc:"Draaien altijd door, ook als het niet hoeft.",
+    stat:"Per niveau: +1.2 munten/tick, +0.30 Koolmonoxide/tick.",
+    baseCost:150, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 1.2*lvl*st.industryMult; s.co.rate += 0.30*lvl; } },
+  { id:"coal", cat:"industrie", name:"Kolencentrale", icon:"⚫", prereq:{id:"factory",lvl:3},
+    desc:"Ouderwets betrouwbaar. Ook ouderwets vervuilend.",
+    stat:"Per niveau: +1.5 munten/tick, +0.50 Zwaveldioxide/tick.",
+    baseCost:120, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 1.5*lvl*st.industryMult; s.so2.rate += 0.50*lvl; } },
+  { id:"trucking", cat:"industrie", name:"Vrachtwagenvloot", icon:"🚛", prereq:{id:"coal",lvl:2},
+    desc:"Levert alles snel af. Laat vooral roet achter.",
+    stat:"Per niveau: +2.5 munten/tick, +0.35 Fijnstof/tick.",
+    baseCost:250, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 2.5*lvl*st.industryMult; s.roet.rate += 0.35*lvl; } },
+  { id:"chem", cat:"industrie", name:"Chemieconcern", icon:"🧫", prereq:{id:"coal",lvl:3},
+    desc:"Maakt plastic, verf en een beetje benzeen als bijvangst.",
+    stat:"Per niveau: +3 munten/tick, +0.40 Benzeen/tick.",
+    baseCost:300, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 3*lvl*st.industryMult; s.c6h6.rate += 0.40*lvl; } },
+  { id:"bleach", cat:"industrie", name:"Bleekmiddelfabriek", icon:"🟢", prereq:{id:"chem",lvl:2},
+    desc:"Maakt alles witter. Behalve de lucht erboven.",
+    stat:"Per niveau: +3.5 munten/tick, +0.30 Chloor/tick.",
+    baseCost:350, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 3.5*lvl*st.industryMult; s.cl2.rate += 0.30*lvl; } },
+  { id:"plastics", cat:"industrie", name:"Kunststoffabriek", icon:"🧴", prereq:{id:"chem",lvl:2},
+    desc:"Alles wordt plastic. Ook de lucht, een beetje.",
+    stat:"Per niveau: +4 munten/tick, +0.20 Formaldehyde/tick.",
+    baseCost:400, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 4*lvl*st.industryMult; s.ch2o.rate += 0.20*lvl; } },
+  { id:"teflon", cat:"industrie", name:"Teflon Fabriek", icon:"🍳", prereq:{id:"chem",lvl:3},
+    desc:"'Blijft altijd plakken' geldt ook voor de nasleep.",
+    stat:"Per niveau: +6 munten/tick, +0.25 PFAS/tick.",
+    baseCost:700, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 6*lvl*st.industryMult; s.pfas.rate += 0.25*lvl; } },
+  { id:"mercury", cat:"industrie", name:"Kwikmijn", icon:"🌡️", prereq:{id:"teflon",lvl:2},
+    desc:"Ouderwetse thermometers verkopen nog steeds goed, ergens.",
+    stat:"Per niveau: +7 munten/tick, +0.15 Kwikdamp/tick.",
+    baseCost:900, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 7*lvl*st.industryMult; s.hg.rate += 0.15*lvl; } },
+  { id:"uramine", cat:"industrie", name:"Uraniummijn", icon:"⛏️", prereq:{id:"teflon",lvl:3},
+    desc:"Graaft naar brandstof voor de volgende stap. Radon komt gratis mee.",
+    stat:"Per niveau: +8 munten/tick, +0.15 Radon/tick. Ontgrendelt Radon.",
+    baseCost:1000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 8*lvl*st.industryMult; s.radon.rate += 0.15*lvl; },
+    unlockSubstance:"radon" },
+  { id:"incinerator", cat:"industrie", name:"Afvalverbrandingsoven", icon:"🔥", prereq:{id:"trucking",lvl:3},
+    desc:"Verbrandt het afval van de rest van uw bedrijf. Maakt er dioxine van.",
+    stat:"Per niveau: +9 munten/tick, +0.12 Dioxine/tick.",
+    baseCost:1300, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 9*lvl*st.industryMult; s.dioxine.rate += 0.12*lvl; } },
+  { id:"datacenter", cat:"industrie", name:"Datacenter", icon:"🖥️", prereq:{id:"generators",lvl:5},
+    desc:"Een enorme verzameling computers die vooral warmte produceert.",
+    stat:"Per niveau: +20 munten/tick, +1.0 CO₂/tick",
+    baseCost:1450,
+    growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 20*lvl*st.industryMult; s.co2.rate += 1.0*lvl;  }},
+  { id:"nuclear", cat:"industrie", name:"Kerncentrale", icon:"⚛️", prereq:{id:"uramine",lvl:3},
+    desc:"Gemarket als 'schone energie'. De meter is het roerend eens.",
+    stat:"Per niveau: +12 munten/tick, +0.20 Uranium/tick. Ontgrendelt Uranium.",
+    baseCost:1500, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 12*lvl*st.industryMult; s.ur.rate += 0.20*lvl; },
+    unlockSubstance:"ur" },
+  { id:"weapons", cat:"industrie", name:"Verrijkingsfabriek", icon:"💣", prereq:{id:"nuclear",lvl:5},
+    desc:"Waarom stoppen bij energie? Er is meer winst te verrijken.",
+    stat:"Per niveau: +25 munten/tick, +0.15 Plutonium/tick. Ontgrendelt Plutonium.",
+    baseCost:4000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 25*lvl*st.industryMult; s.pu.rate += 0.15*lvl; },
+    unlockSubstance:"pu" },
+  { id:"nuketest", cat:"industrie", name:"Kernwapentests", icon:"🧨", prereq:{id:"weapons",lvl:3},
+    desc:"Hier bestaat geen filter, geen omzetting, geen excuus voor. Alleen winst.",
+    stat:"Per niveau: +40 munten/tick, +0.10 Cesium-137/tick. Ontgrendelt Cesium-137.",
+    baseCost:8000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 40*lvl*st.industryMult; s.cs137.rate += 0.10*lvl; },
+    unlockSubstance:"cs137" },
+  { id:"offshorefactory", cat:"industrie", name:"Overzeese Fabriek", icon:"🚢", prereq:{id:"nuketest",lvl:3},
+    desc:"Ver weg genoeg dat niemand vragen stelt. Diep-industrieel eindspel.",
+    stat:"Per niveau: +50 munten/tick, +0.10 Microplastics/tick. Ontgrendelt Microplastics.",
+    baseCost:12000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 50*lvl*st.industryMult; s.microplastics.rate += 0.10*lvl; },
+    unlockSubstance:"microplastics" },
+  { id:"privejet", cat:"industrie", name:"Privéjet-vloot", icon:"✈️", prereq:{id:"nuketest",lvl:5},
+    desc:"Voor het snel bezoeken van klimaattoppen.",
+    stat:"Per niveau: +65 munten/tick, +0.08 Vliegtuigdamp/tick. Ontgrendelt Vliegtuigdamp.",
+    baseCost:15000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 65*lvl*st.industryMult; s.kerosine.rate += 0.08*lvl; },
+    unlockSubstance:"kerosine" },
+  { id:"deepsea", cat:"industrie", name:"Diepzeemijnbouw", icon:"🪨", prereq:{id:"weapons",lvl:8},
+    desc:"Wat je niet ziet, kan je ook niet aanklagen.",
+    stat:"Per niveau: +90 munten/tick, +0.07 Diepzeeslib/tick. Ontgrendelt Diepzeeslib.",
+    baseCost:20000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 90*lvl*st.industryMult; s.slib.rate += 0.07*lvl; },
+    unlockSubstance:"slib" },
+  { id:"spacemining", cat:"industrie", name:"Ruimtemijnbouw", icon:"🛰️", prereq:{id:"nuketest",lvl:10},
+    desc:"De aarde was toch bijna leeg. Tijd voor de rest van het zonnestelsel.",
+    stat:"Per niveau: +200 munten/tick, +0.06 Ruimtepuin/tick. Ontgrendelt Ruimtepuin.",
+    baseCost:50000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 200*lvl*st.industryMult; s.ruimtepuin.rate += 0.06*lvl; },
+    unlockSubstance:"ruimtepuin" },
+  { id:"moonbase", cat:"industrie", name:"Maanbasis", icon:"🌕", prereq:{id:"spacemining",lvl:3},
+    desc:"Geen bijproduct hier — alleen een zeldzame, glimmende brandstof voor de toekomst.",
+    stat:"Per niveau: +220 munten/tick, +0.04 Helium-3/tick. Ontgrendelt Helium-3.",
+    baseCost:40000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 220*lvl*st.industryMult; s.he3.rate += 0.04*lvl; },
+    unlockSubstance:"he3" },
+  { id:"orbitalfactory", cat:"industrie", name:"Orbitale Fabriek", icon:"🌌", prereq:{id:"moonbase",lvl:5},
+    desc:"Buiten de dampkring geldt geen enkel verdrag. Dat is nogal handig.",
+    stat:"Per niveau: +500 munten/tick, +0.05 Orbitaal Puin/tick. Ontgrendelt Orbitaal Puin.",
+    baseCost:150000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 500*lvl*st.industryMult; s.orbitaalpuin.rate += 0.05*lvl; },
+    unlockSubstance:"orbitaalpuin" },
+  { id:"antimatter", cat:"industrie", name:"Antimateriefabriek", icon:"⚛️", prereq:{id:"orbitalfactory",lvl:3},
+    desc:"Produceert antimaterie. Niemand weet precies waarom, maar het is duur.",
+    stat:"Per niveau: +2000 munten/tick +0.01 Antimaterie/tick.",
+    baseCost:500000, growth:1.12,
+    effect:(lvl,s,st)=>{ s.coinsPerTick += 2000*lvl*st.industryMult; s.antimaterie.rate += 0.01*lvl; },
+    unlockSubstance:"antimaterie"},
+  { id:"oxygen_industry", cat:"grondstoffenindustrie", name:"Zuurstofindustrie", icon:"💨",
+    desc:"Gebruikt zuurstof als industriële grondstof.",
+    stat:"Per niveau: +0.1 munt/tick.",
+    substanceCost:"o2", baseCost:100, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 0.1*lvl*st.industryMult; }}},
+  { id:"nitrogen_industry", cat:"grondstoffenindustrie", name:"Stikstofindustrie", icon:"💨",
+    desc:"Gebruikt stikstof als industriële grondstof.",
+    stat:"Per niveau: +0.3 munt/tick.",
+    substanceCost:"n2", baseCost:100, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 0.3*lvl*st.industryMult; }}},
+  { id:"argon_industry", cat:"grondstoffenindustrie", name:"Argonindustrie", icon:"💨",
+    desc:"Gebruikt argon als industriële grondstof.",
+    stat:"Per niveau: +1 munt/tick.",
+    substanceCost:"ar", baseCost:20, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 1*lvl*st.industryMult; }}},
+  { id:"hydrogen_industry", cat:"grondstoffenindustrie", name:"Waterstofindustrie", icon:"🫧",
+    desc:"Gebruikt waterstof als industriële grondstof.",
+    stat:"Per niveau: +1.25 munt/tick.",
+    substanceCost:"h2", baseCost:20, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 1.25*lvl*st.industryMult; }}},
+  { id:"helium_industry", cat:"grondstoffenindustrie", name:"Heliumindustrie", icon:"🎈",
+    desc:"Gebruikt helium als industriële grondstof.",
+    stat:"Per niveau: +3 munt/tick.",
+    substanceCost:"he", baseCost:10, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 3*lvl*st.industryMult; }}},
+  { id:"neon_industry", cat:"grondstoffenindustrie", name:"Neonindustrie", icon:"💨",
+    desc:"Gebruikt zuurstof als industriële grondstof.",
+    stat:"Per niveau: +10 munt/tick.",
+    substanceCost:"ne", baseCost:10, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 10*lvl*st.industryMult; }}},
+  { id:"helium3_industry", cat:"grondstoffenindustrie", name:"Helium-3 industrie", icon:"💨",
+    desc:"Gebruikt helium-3 als industriële grondstof.",
+    stat:"Per niveau: +50 munt/tick.",
+    substanceCost:"he3", baseCost:10, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 50*lvl*st.industryMult; }}},
+  { id:"antimatter_industry", cat:"grondstoffenindustrie", name:"Antimaterie-industrie", icon:"⚛️",
+    desc:"Gebruikt Antimaterie als industriële grondstof.",
+    stat:"Per niveau: +250 munt/tick.",
+    substanceCost:"antimaterie", baseCost:10, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 250*lvl*st.industryMult; }}},
+  { id:"golddust_industry", cat:"grondstoffenindustrie", name:"Goudstofindustrie", icon:"🏆",
+    desc:"Gebruikt Goudstof als industriële grondstof.",
+    stat:"Per niveau: +1000 munt/tick.",
+    substanceCost:"golddust", baseCost:10, growth:1.02,
+    effect:(lvl,s,st)=>{{ s.coinsPerTick += 1000*lvl*st.industryMult; }}},
+
+  // ---------- PERSONEEL ----------
+  { id:"worker", cat:"personeel", name:"Arbeider inhuren", icon:"👷",
+    desc:"Ademt zuurstof uit uw verzamelde lucht, blaast CO₂ terug.",
+    stat:"Per niveau: verbruikt 0.5 Zuurstof/tick, produceert 0.35 CO₂/tick, +1% industrievermenigvuldiger.",
+    baseCost:25, growth:1.11,
+    effect:(lvl,s,st)=>{ st.workerLevel=lvl; } },
+  { id:"manager", cat:"personeel", name:"Manager aannemen", icon:"👔", prereq:{id:"worker",lvl:3},
+    desc:"Produceert niets. Verhoogt wel ieders omzet, zegt hij zelf.",
+    stat:"Per niveau: +2% industrievermenigvuldiger (werkt op alle fabrieken).",
+    baseCost:200, growth:1.11,
+    effect:(lvl,s,st)=>{ st.managerLevel=lvl; } },
+  { id:"lobbyist", cat:"personeel", name:"Lobbyist inhuren", icon:"🕴️", prereq:{id:"manager",lvl:2},
+    desc:"Zorgt dat lozen net iets minder pijn doet aan de portemonnee.",
+    stat:"Per niveau: -1% loosprijs op alle vervuiling (max -20% bij niv. 20).",
+    baseCost:350, growth:1.10, maxLevel:20,
+    effect:(lvl,s,st)=>{ st.lobbyLevel=lvl; } },
+  { id:"prteam", cat:"personeel", name:"PR-team aannemen", icon:"📣", prereq:{id:"lobbyist",lvl:2},
+    desc:"Verandert niets aan de lucht. Verandert alles aan het verhaal.",
+    stat:"Per niveau: +0.1 punten op de luchtkwaliteitsindex. Puur decoratief.",
+    baseCost:500, growth:1.10,
+    effect:(lvl,s,st)=>{ st.prLevel=lvl; } },
+  { id:"legal", cat:"personeel", name:"Juridisch Team", icon:"⚖️", prereq:{id:"lobbyist",lvl:4},
+    desc:"Eigen advocaten, nog effectiever dan de lobbyist. En duurder.",
+    stat:"Per niveau: -2% loosprijs op alle vervuiling (max -40% bij niv. 20, stapelt met de lobbyist).",
+    baseCost:900, growth:1.10, maxLevel:20,
+    effect:(lvl,s,st)=>{ st.legalLevel=lvl; } },
+  {id:"aiassistant", cat:"personeel", name:"AI-assistent", icon:"🤖", prereq:{id:"datacenter",lvl:3},
+    desc:"Een digitale medewerker die uw volledige industrie efficiënter maakt.",
+    stat:"Per niveau: +3% industrievermenigvuldiger. Verbruikt veel Waterstof en zet dit om in CO₂.",
+    baseCost:10000, growth:1.11, 
+    effect:(lvl,s,st)=>{ st.aiLevel=lvl; } },
+    {id:"trashastronaut", cat:"personeel", name:"Vuilnis-astronaut", icon:"🧑‍🚀", prereq:{id:"spacemining",lvl:5},
+    desc:"Een astronaut die zelfs in de ruimte nog een bestemming voor uw afval weet te vinden.",
+    stat:"Per niveau: dumpkosten worden vermenigvuldigd met 0,99.",
+    baseCost:10000, growth:1.11,
+    effect:(lvl,s,st)=>{ st.trashAstronautLevel=lvl; }},
+ 
+
+  // ---------- FINANCIËN ----------
+  { id:"subsidy", cat:"financien", name:"Overheidssubsidie", icon:"🏛️",
+    desc:"De belastingbetaler steunt uw duurzame ambities graag.",
+    stat:"Per niveau: +8 munten/dag basisinkomen.",
+    baseCost:20, growth:1.05,
+    effect:(lvl,s,st)=>{ st.baseIncomeBonus += 8*lvl; } },
+  { id:"reclame", cat:"financien", name:"Reclamecampagne", icon:"📺",
+    desc:"Verkoopt het gevoel van duurzaamheid. Winstgevend gevoel.",
+    stat:"Per niveau: +25 munten/dag basisinkomen.",
+    baseCost:250, growth:1.06,
+    effect:(lvl,s,st)=>{ st.baseIncomeBonus += 25*lvl; } },
+  { id:"investfund", cat:"financien", name:"Beleggingsfonds", icon:"📈",
+    desc:"Geld verdienen met geld. De zuiverste vorm van gebakken lucht die er is.",
+    stat:"Per niveau: +50 munten/dag basisinkomen.",
+    baseCost:700, growth:1.07,
+    effect:(lvl,s,st)=>{ st.baseIncomeBonus += 50*lvl; } },
+  { id:"fusie", cat:"financien", name:"Fusieonderhandelaar", icon:"🤝", prereq:{id:"manager",lvl:2},
+    desc:"Financiële trucjes die de winst verhogen zonder iets te produceren.",
+    stat:"Per niveau: +5% industrievermenigvuldiger.",
+    baseCost:1800, growth:1.12,
+    effect:(lvl,s,st)=>{} },
+  { id:"broker", cat:"financien", name:"Louche Afvalmakelaar", icon:"🕶️", prereq:{id:"lobbyist",lvl:2}, maxLevel:13,
+    desc:"Kent een gast met een boot. PFAS, Uranium, Plutonium en Cesium verdwijnen ineens goedkoper.",
+    stat:"Per niveau: -3% loosprijs op PFAS/Uranium/Plutonium/Cesium-137 (max -39% bij niv. 13).",
+    baseCost:1200, growth:1.15,
+    effect:(lvl,s,st)=>{ st.brokerDiscount = Math.min(0.65, 0.03*lvl); } },
+  { id:"offshore", cat:"financien", name:"Offshore Rekening", icon:"🏝️", prereq:{id:"subsidy",lvl:3}, maxLevel:100,
+    desc:"Een klein eilandje, een klein voordeeltje. Niets om jaloers op te zijn.",
+    stat:"Per niveau: +1% op alle inkomsten (max +100% bij niv. 100).",
+    baseCost:2500, growth:1.12,
+    effect:(lvl,s,st)=>{ st.globalIncomeMult += 0.01*lvl; } },
+  { id:"bedrijfsgroei", cat:"financien", name:"Bedrijfsgroei", icon:"📊", prereq:{id:"investfund",lvl:3}, maxLevel:30,
+    desc:"Structurele groei die vanzelf meer opbrengt, uit niets.",
+    stat:"Per niveau: +3% op alle inkomsten (max +90% bij niv. 30).",
+    baseCost:5000, growth:1.15,
+    effect:(lvl,s,st)=>{ st.globalIncomeMult += 0.03*lvl; } },
+  { id:"insider", cat:"financien", name:"Insider Trading", icon:"🕵️‍♂️",  prereq:{id:"broker",lvl:3},
+    desc:"Gokken is veel leuker als je de uitkomst al weet",
+    stat:"Per niveau: +250 munten/dag basisinkomen.",
+    baseCost:2000, growth:1.04,
+    effect:(lvl,s,st)=>{ st.baseIncomeBonus += 250*lvl; } },
+  { id:"Witwassen", cat:"financien", name:"Witwassen", icon:"💰",  prereq:{id:"subsidy",lvl:100},
+    desc:"Het beste medicijn tegen inflatie",
+    stat:"Per niveau: +2000 munten/dag basisinkomen.",
+    baseCost:10000, growth:1.05,
+    effect:(lvl,s,st)=>{ st.baseIncomeBonus += 2000*lvl; } },
+  { id:"wereldexpansie", cat:"financien", name:"Wereldwijde Expansie", icon:"🌐", prereq:{id:"nuketest",lvl:3},
+    desc:"Internationale vertakkingen die elke fabriek winstgevender maken.",
+    stat:"Per niveau: +10% industrievermenigvuldiger.",
+    baseCost:20000, growth:1.12,
+    effect:(lvl,s,st)=>{} },
+  { id:"filantropie", cat:"financien", name:"Fiscaal Voordelige Donatie", icon:"🧾", maxLevel:20,
+    desc:"Slimme constructies zorgen dat uw donaties op papier nog groter lijken.",
+    stat:"Per niveau: +5% extra score per gedoneerde munt (max +100% bij niv. 20).",
+    baseCost:2000, growth:1.5,
+    effect:(lvl,s,st)=>{} },
+  { id:"income_boost", cat:"financien", name:"Geautomatiseerde inkomsten", icon:"⛓️", 
+    desc:"Automatiseert een klein deel van de inkomsten.",
+    stat:"Per niveau: +0.001 inkomen/tick.",
+    baseCost:250, growth:1.05,
+    effect:(lvl,s,st)=>{st.tickIncomeBonus += 0.001 * lvl;}},
+  { id:"dividend", cat:"financien", name:"Dividend", icon:"💸", 
+    desc:"Verdien door winst van anderen.",
+    stat:"Per niveau: +0.003 inkomen/tick.",
+    baseCost:1500, growth:1.05,
+    effect:(lvl,s,st)=>{st.tickIncomeBonus += 0.003 * lvl;}},
+  { id:"raincash", cat:"financien", name:"Muntenregen", icon:"🪙", 
+    desc:"Het geld komt gewoon uit de lucht vallen.",
+    stat:"Per niveau: +0.01 inkomen/tick.",
+    baseCost:10000, growth:1.05,
+    effect:(lvl,s,st)=>{st.tickIncomeBonus += 0.01 * lvl;}},
+  { id:"money_farm", cat:"financien", name:"Geldkwekerij", icon:"🪴", 
+    desc:"Gek genoeg volkomen legaal.",
+    stat:"Per niveau: +0.1 inkomen/tick.",
+    baseCost:1000000, growth:1.05,
+    effect:(lvl,s,st)=>{st.tickIncomeBonus += 0.1 * lvl;}},
+   { id:"Monopoly", cat:"financien", name:"Monopoly", icon:"🎩", prereq:{id:"fusie",lvl:20}, maxLevel:25,
+    desc:"Wij hebben de enigste lucht en de duurste lucht.",
+    stat:"Per niveau: +10% op alle inkomsten (max +250% bij niv. 25).",
+    baseCost:5000000, growth:1.15,
+    effect:(lvl,s,st)=>{ st.globalIncomeMult += 0.1*lvl; } },
+  // ---------- ONDERZOEK ----------
+  { id:"electrolysis", cat:"onderzoek", name:"Elektrolyse-installatie", icon:"⚗️",
+    desc:"Splitst water tot zeldzame Waterstof. Puur voor de verzameling.",
+    stat:"Per niveau: +0.15 Waterstof/tick. Ontgrendelt Waterstof.",
+    baseCost:300, growth:1.04,
+    effect:(lvl,s)=>{ s.h2.rate += 0.15*lvl; },
+    unlockSubstance:"h2" },
+  { id:"lab", cat:"onderzoek", name:"Onderzoekslab", icon:"🔬", maxLevel:1,
+    desc:"Ontgrendelt technieken om vervuiling om te toveren tot iets minder ergs — of zelfs winst.",
+    stat:"Eenmalig: ontgrendelt alle omzettingstechnieken hieronder.",
+    baseCost:1000, growth:1,
+    effect:(lvl,s,st)=>{ st.labUnlocked = lvl>=1; } },
+  { id:"carbonc", cat:"onderzoek", name:"Koolstofafvang", icon:"🌱", prereq:{id:"lab",lvl:1},
+    desc:"Vangt CO₂ en zet een deel om in bruikbare zuurstof.",
+    stat:"Per niveau: zet 0.30 CO₂/tick om in 0.15 Zuurstof/tick.",
+    baseCost:400, growth:1.05,
+    effect:(lvl,s)=>{ s.convert.push({from:"co2", to:"o2", fromRate:0.30*lvl, toRate:0.15*lvl}); } },
+  { id:"methanec", cat:"onderzoek", name:"Methaanvangst", icon:"🔥", prereq:{id:"lab",lvl:1},
+    desc:"Methaan naar energie. Een van de weinige echt winstgevende trucs.",
+    stat:"Per niveau: zet 0.25 Methaan/tick om in 0.5 munten/tick.",
+    baseCost:600, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"ch4", toCoins:0.5*lvl, fromRate:0.25*lvl}); } },
+  { id:"benzenec", cat:"onderzoek", name:"Chemische Recycling", icon:"♻️", prereq:{id:"lab",lvl:1},
+    desc:"Zet Benzeen om in het iets minder verontrustende CO₂.",
+    stat:"Per niveau: zet 0.20 Benzeen/tick om in 0.30 CO₂/tick.",
+    baseCost:900, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"c6h6", to:"co2", fromRate:0.20*lvl, toRate:0.30*lvl}); } },
+  { id:"pfasfilter", cat:"onderzoek", name:"PFAS-Filter", icon:"🧯", prereq:{id:"lab",lvl:1},
+    desc:"Vernietigt PFAS traag en tegen hoge kosten. 'Forever chemicals' inderdaad.",
+    stat:"Per niveau: vernietigt 0.10 PFAS/tick, kost 1 munt/tick onderhoud.",
+    baseCost:1500, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"pfas", fromRate:0.10*lvl, upkeep:1*lvl}); } },
+  { id:"nuclearrecycle", cat:"onderzoek", name:"Kernsplijtingsrecycling", icon:"🔁", prereq:{id:"lab",lvl:1},
+    desc:"Herverwerkt Uranium tot een kleine, verrassend winstgevende stroom munten.",
+    stat:"Per niveau: zet 0.15 Uranium/tick om in 1 munt/tick.",
+    baseCost:2500, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"ur", toCoins:1*lvl, fromRate:0.15*lvl}); } },
+  { id:"so2scrub", cat:"onderzoek", name:"Rookgasreiniging", icon:"🧽", prereq:{id:"lab",lvl:1},
+    desc:"Wast zwaveldioxide om tot het iets onschuldiger ogende CO₂.",
+    stat:"Per niveau: zet 0.25 Zwaveldioxide/tick om in 0.35 CO₂/tick.",
+    baseCost:550, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"so2", to:"co2", fromRate:0.25*lvl, toRate:0.35*lvl}); } },
+  { id:"helium", cat:"onderzoek", name:"Heliumwinning", icon:"🎈",
+    desc:"Zeldzaam en feestelijk gas. Puur voor de verzameling.",
+    stat:"Per niveau: +0.10 Helium/tick. Ontgrendelt Helium.",
+    baseCost:350, growth:1.10,
+    effect:(lvl,s)=>{ s.he.rate += 0.10*lvl; },
+    unlockSubstance:"he" },
+  { id:"sootfilter", cat:"onderzoek", name:"Roetfilter", icon:"🌀", prereq:{id:"lab",lvl:1},
+    desc:"Vangt fijnstof op en zet het om in gewoon CO₂.",
+    stat:"Per niveau: zet 0.30 Fijnstof/tick om in 0.20 CO₂/tick.",
+    baseCost:450, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"roet", to:"co2", fromRate:0.30*lvl, toRate:0.20*lvl}); } },
+  { id:"ammoniarecycle", cat:"onderzoek", name:"Ammoniakrecyclage", icon:"🌾", prereq:{id:"lab",lvl:1},
+    desc:"Verkoopt teruggewonnen ammoniak door als kunstmest. Winst uit mest.",
+    stat:"Per niveau: zet 0.30 Ammoniak/tick om in 0.4 munten/tick.",
+    baseCost:500, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"nh3", toCoins:0.4*lvl, fromRate:0.30*lvl}); } },
+  { id:"formalneutral", cat:"onderzoek", name:"Formaldehyde-Neutralisatie", icon:"🧯", prereq:{id:"lab",lvl:1},
+    desc:"Breekt formaldehyde langzaam af. Duur, maar het moet van iemand.",
+    stat:"Per niveau: vernietigt 0.12 Formaldehyde/tick, kost 1.2 munt/tick onderhoud.",
+    baseCost:1200, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"ch2o", fromRate:0.12*lvl, upkeep:1.2*lvl}); } },
+  { id:"radonextract", cat:"onderzoek", name:"Radon-extractie", icon:"🔬", prereq:{id:"lab",lvl:1},
+    desc:"Zuigt radon weg en verkoopt het door voor 'medische toepassingen'.",
+    stat:"Per niveau: zet 0.15 Radon/tick om in 0.8 munten/tick.",
+    baseCost:1800, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"radon", toCoins:0.8*lvl, fromRate:0.15*lvl}); } },
+  { id:"noblegas", cat:"onderzoek", name:"Edelgasdestillatie", icon:"💎", prereq:{id:"lab",lvl:1},
+    desc:"Distilleert de allerlaatste restjes tot zeldzaam Neon.",
+    stat:"Per niveau: +0.05 Neon/tick. Ontgrendelt Neon.",
+    baseCost:1000, growth:1.10,
+    effect:(lvl,s)=>{ s.ne.rate += 0.05*lvl; },
+    unlockSubstance:"ne" },
+  { id:"coafterburn", cat:"onderzoek", name:"CO-Naverbrander", icon:"🔆", prereq:{id:"lab",lvl:1},
+    desc:"Verbrandt koolmonoxide alsnog helemaal op tot CO₂.",
+    stat:"Per niveau: zet 0.30 Koolmonoxide/tick om in 0.30 CO₂/tick.",
+    baseCost:500, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"co", to:"co2", fromRate:0.30*lvl, toRate:0.30*lvl}); } },
+  { id:"chlorineneutral", cat:"onderzoek", name:"Chloorneutralisatie", icon:"🧪", prereq:{id:"lab",lvl:1},
+    desc:"Neutraliseert chloorgas tot het iets rustiger CO₂.",
+    stat:"Per niveau: zet 0.25 Chloor/tick om in 0.20 CO₂/tick.",
+    baseCost:700, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"cl2", to:"co2", fromRate:0.25*lvl, toRate:0.20*lvl}); } },
+  { id:"mercurycapture", cat:"onderzoek", name:"Kwikvangst", icon:"🧲", prereq:{id:"lab",lvl:1},
+    desc:"Vangt kwikdamp op. Kostbaar, giftig, noodzakelijk.",
+    stat:"Per niveau: vernietigt 0.10 Kwikdamp/tick, kost 1.5 munt/tick onderhoud.",
+    baseCost:1600, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"hg", fromRate:0.10*lvl, upkeep:1.5*lvl}); } },
+  { id:"dioxinedestroy", cat:"onderzoek", name:"Dioxine-Vernietiging", icon:"⚠️", prereq:{id:"lab",lvl:1},
+    desc:"Extreem hoge temperaturen, extreme kosten, een klein beetje minder dioxine.",
+    stat:"Per niveau: vernietigt 0.08 Dioxine/tick, kost 2.5 munt/tick onderhoud.",
+    baseCost:3000, growth:1.10,
+    effect:(lvl,s)=>{ s.convert.push({from:"dioxine", fromRate:0.08*lvl, upkeep:2.5*lvl}); } },
+
+  // ---------- KLIKKER ----------
+  { id:"lungs", cat:"klikker", name:"Betere Longen", icon:"🫁",
+    desc:"Diepere teugen lucht, elke keer dat u klikt.",
+    stat:"Per niveau: +0.5 Zuurstof en +0.3 Stikstof per klik.",
+    baseCost:20, growth:1.1,
+    effect:(lvl,s,st)=>{ st.clickO2Bonus += 0.5*lvl; st.clickN2Bonus += 0.3*lvl; } },
+  { id:"intern", cat:"klikker", name:"Stagiair inhuren", icon:"🧑‍🎓",
+    desc:"Klikt driftig mee. Onbetaald, op één koffie na.",
+    stat:"Per niveau: +0.7 Zuurstof per klik.",
+    baseCost:45, growth:1.11,
+    effect:(lvl,s,st)=>{ st.clickO2Bonus += 0.7*lvl; } },
+  { id:"fan", cat:"klikker", name:"Handventilator", icon:"🪭", prereq:{id:"lungs",lvl:3},
+    desc:"Waait bij elke klik nog wat extra lucht uw kant op.",
+    stat:"Per niveau: +1 Zuurstof en +0.5 Stikstof per klik.",
+    baseCost:90, growth:1.11,
+    effect:(lvl,s,st)=>{ st.clickO2Bonus += 1*lvl; st.clickN2Bonus += 0.5*lvl; } },
+  { id:"critclick", cat:"klikker", name:"Kritieke Klik", icon:"💥", prereq:{id:"fan",lvl:2}, maxLevel:17,
+    desc:"Soms klikt u perfect: 5x zoveel lucht in één keer.",
+    stat:"Per niveau: +3% kritieke kans (max 50% bij niv. 17).",
+    baseCost:150, growth:1.11,
+    effect:(lvl,s,st)=>{ st.critChance = Math.min(0.5, 0.03*lvl); } },
+  { id:"turbovac", cat:"klikker", name:"Turbovacuüm", icon:"🌀", prereq:{id:"fan",lvl:3},
+    desc:"Zuigt de hemel bijna letterlijk leeg, één klik tegelijk.",
+    stat:"Per niveau: +2.5 Zuurstof en +1 Stikstof per klik.",
+    baseCost:300, growth:1.11,
+    effect:(lvl,s,st)=>{ st.clickO2Bonus += 2.5*lvl; st.clickN2Bonus += 1*lvl; } },
+  { id:"breathcoach", cat:"klikker", name:"Ademhalingscoach", icon:"🧘", prereq:{id:"turbovac",lvl:2},
+    desc:"Leert u exact de juiste techniek om vooral stikstof te oogsten.",
+    stat:"Per niveau: +4 Stikstof per klik.",
+    baseCost:500, growth:1.11,
+    effect:(lvl,s,st)=>{ st.clickN2Bonus += 4*lvl; } },
+  { id:"miniplant", cat:"klikker", name:"Persoonlijke Zuurstoffabriek", icon:"🏗️", prereq:{id:"turbovac",lvl:3},
+    desc:"Een fabriekje dat op uw rug past. Extreem inefficiënt, extreem effectief.",
+    stat:"Per niveau: +10 Zuurstof per klik.",
+    baseCost:800, growth:1.11,
+    effect:(lvl,s,st)=>{ st.clickO2Bonus += 10*lvl; } },
+  { id:"luckyfind", cat:"klikker", name:"Gelukstreffer", icon:"🍀", prereq:{id:"critclick",lvl:2}, maxLevel:20,
+    desc:"Soms zit er een beetje Helium tussen uw klik. Puur geluk.",
+    stat:"Per niveau: +1% kans op +0.5 bonus Helium per klik (max 20% bij niv. 20). Vereist ontgrendelde Helium.",
+    baseCost:1000, growth:1.11,
+    effect:(lvl,s,st)=>{ st.luckyChance = Math.min(0.2, 0.01*lvl); } },
+  { id:"netwerkeffect", cat:"klikker", name:"Netwerkeffect", icon:"🌐", prereq:{id:"miniplant",lvl:3}, maxLevel:15,
+    desc:"Hoe meer mensen erover praten, hoe meer lucht uw klik oplevert.",
+    stat:"Per niveau: +4% klikopbrengst (max +60% bij niv. 15).",
+    baseCost:2000, growth:1.11,
+    effect:(lvl,s,st)=>{ st.clickMult = 1 + 0.04*lvl; } },
+  { id:"Goldfinder", cat:"klikker", name:"Ijzeren Zeef", icon:"🏆", prereq:{id:"luckyfind",lvl:5}, maxLevel:50,
+    desc:"Niks is leuker dan stukjes goud terugvinden in je zeef.",
+    stat:"Per niveau: +0.1% kans op +1 Goudstof per klik (max 5% bij level 50).",
+    baseCost:5000, growth:1.11,
+    effect:(lvl,s,st)=>{ st.GoldChance = Math.min(0.05, 0.001*lvl); } },
+  // ---------- OVERLEVING ----------
+  { id:"isolatiesysteem", cat:"overleving", name:"Isolatiesysteem", icon:"🧊", maxLevel:50,
+    desc:"Vertraagt hoe snel de Doomsday Klok aftikt, ongeacht de luchtkwaliteit.",
+    stat:"Per niveau: -1% aftiksnelheid (max -50% bij niv. 50).",
+    baseCost:400, growth:1.2,
+    effect:(lvl,s,st)=>{ st.isolatieDiscount = Math.min(0.5, 0.01*lvl); } },
+];
+
+const CATEGORY_LABELS = {
+  industrie:"Industrie", grondstoffenindustrie: "Grondstoffenindustrie", personeel:"Personeel", financien:"Financiën & Opslag",
+  onderzoek:"Onderzoek & Recycling", klikker:"Klikken", overleving:"Overleving"
+};
+
+/* ============================= DONATIES ============================= */
+const DONATION_TIERS = [
+  { at:0,        medal:"—",  title:"Geen status", bg:"linear-gradient(90deg,#eee,#f7f7f7)" },
+  { at:50,       medal:"🥉", title:"Vriend van BIG AIR", bg:"linear-gradient(90deg,#d8a06a,#e8c090)" },
+  { at:250,      medal:"🥈", title:"Erelid", bg:"linear-gradient(90deg,#c7cdd2,#e8ecef)" },
+  { at:1000,     medal:"🥇", title:"Klimaatheld van het Jaar", bg:"linear-gradient(90deg,#ffd23f,#ffe98a)" },
+  { at:5000,     medal:"🏆", title:"Ridder in de Orde van de Rookpluim", bg:"linear-gradient(90deg,#ffc93f,#fff0b0)" },
+  { at:15000,    medal:"👑", title:"Ere-Voorzitter van de Groenwas-commissie", bg:"linear-gradient(90deg,#c9a8ff,#ffe98a)" },
+  { at:40000,    medal:"💎", title:"Onvervangbare Partner van de Planeet", bg:"linear-gradient(90deg,#9fd6ff,#ffffff)" },
+  { at:100000,   medal:"🌟", title:"Ambassadeur voor Duurzame Schijn", bg:"linear-gradient(90deg,#2a2a4a,#5a5a9a)" },
+  { at:250000,   medal:"🎖️", title:"Grootmeester van het Jaarverslag", bg:"linear-gradient(90deg,#7a1a1a,#d6a03f)" },
+  { at:600000,   medal:"🛡️", title:"Beschermheer van de Aandeelhouderswaarde", bg:"linear-gradient(90deg,#1a5a5a,#c7cdd2)" },
+  { at:1500000,  medal:"🏅", title:"Levenslang Erelid van de Raad van Bestuur", bg:"linear-gradient(90deg,#ff5f6d,#ffc371,#47cf73,#4f8fdd)" },
+  { at:4000000,  medal:"🌍", title:"Officiële Vriend van Planeet Aarde (postuum te bevestigen)", bg:"linear-gradient(90deg,#2a6a4a,#4f8fdd)" },
+  { at:10000000, medal:"👽", title:"Interplanetair Duurzaamheidsicoon", bg:"linear-gradient(90deg,#1a0a2a,#5a1a8a,#1a0a2a)" },
+];
+const DONATE_AMOUNTS = [10, 100, 1000, 10000, 100000, 1000000, "max"];
+
+/* ============================= BADGES ============================= */
+const ACHIEVEMENTS = [
+  { id:"eersteklik", name:"Eerste Adem", icon:"🌬️", desc:"Klik één keer voor lucht.", check:c=>c.totalClicks>=1 },
+  { id:"duizend", name:"Kleine Ondernemer", icon:"💼", desc:"Verdien 1.000 munten (lifetime).", check:c=>c.totalEarnedAll>=1000 },
+  { id:"ton", name:"Luchtbaron", icon:"🏢", desc:"Verdien 100.000 munten (lifetime).", check:c=>c.totalEarnedAll>=100000 },
+  { id:"miljoen", name:"Miljonair in Gebakken Lucht", icon:"💰", desc:"Verdien 1.000.000 munten (lifetime).", check:c=>c.totalEarnedAll>=1000000 },
+  { id:"miljard", name:"Mogol van de Mist", icon:"🌫️", desc:"Verdien 1 miljard munten (lifetime).", check:c=>c.totalEarnedAll>=1000000000 },
+  { id:"eerstedonatie", name:"Eerste Gift", icon:"🎁", desc:"Doneer voor het eerst aan BIG AIR.", check:c=>c.totalDonatedAll>=10 },
+  { id:"grotesponsor", name:"Grote Sponsor", icon:"🏆", desc:"Doneer in totaal 10.000 munten (lifetime).", check:c=>c.totalDonatedAll>=10000 },
+  { id:"kernfysicus", name:"Kernfysicus", icon:"⚛️", desc:"Bouw een Kerncentrale.", check:c=>c.everBuilt.has('nuclear') },
+  { id:"massavernietiger", name:"Massavernietiger", icon:"💣", desc:"Bouw een Verrijkingsfabriek.", check:c=>c.everBuilt.has('weapons') },
+  { id:"methaanmeester", name:"Methaanmeester", icon:"🐄", desc:"Bouw een Veehouderij.", check:c=>c.everBuilt.has('livestock') },
+  { id:"alleontdekt", name:"Compleet Chemisch Arsenaal", icon:"🧪", desc:"Ontdek alle stoffen.", check:c=>c.everUnlockedSize>=12 },
+  { id:"ruimtevaarder", name:"Ruimtevaarder", icon:"🛰️", desc:"Bouw een Ruimtemijnbouw-installatie.", check:c=>c.everBuilt.has('spacemining') },
+  { id:"klikmachine", name:"Klikmachine", icon:"👆", desc:"Klik 1.000 keer voor lucht.", check:c=>c.totalClicks>=1000 },
+  { id:"eerstedood", name:"Eerste Klap", icon:"💀", desc:"Laat de Doomsday Klok een keer aflopen.", check:c=>c.totalDeaths>=1 },
+  { id:"overlever", name:"Overlever", icon:"🕰️", desc:"Overleef 100 dagen in één leven.", check:c=>c.longestSurvivalDays>=100 },
+  { id:"veteraan", name:"Veteraan", icon:"🎗️", desc:"Overleef 500 dagen in één leven.", check:c=>c.longestSurvivalDays>=500 },
+  { id:"hogescore", name:"Hoge Vlieger", icon:"📈", desc:"Behaal een record van 10.000 munten gedoneerd.", check:c=>c.highscore>=10000 },
+  { id:"torenhoog", name:"Torenhoog Record", icon:"🗽", desc:"Behaal een record van 1.000.000 munten gedoneerd.", check:c=>c.highscore>=1000000 },
+  { id:"perfectelucht", name:"Perfecte Lucht", icon:"🌟", desc:"Bereik een luchtkwaliteitsindex van 99 of hoger.", check:c=>c.everReachedPerfectAir },
+  { id:"rampzalig", name:"Rakelings Ramp", icon:"🔥", desc:"Overleef met een luchtkwaliteitsindex van 5 of lager.", check:c=>c.everReachedZeroQuality },
+];
+
+const NEWS = [
+  "Onze uitstoot is 100% natuurlijk. Net als lava.",
+  "'Wij nemen verantwoordelijkheid' — reeds voor de 47e keer dit jaar.",
+  "Aandeelhouders bedanken u voor uw ademhaling.",
+  "PFAS? Nooit van gehoord. Volgend punt.",
+  "Nieuw rapport: de lucht is technisch gezien nog steeds lucht.",
+  "BIG AIR sponsort nu ook de wolken zelf.",
+  "'Schone kernenergie' — vraag niet verder, kijk gewoon naar de meter.",
+  "Ons duurzaamheidsverslag is nu volledig gedrukt op gerecycled geld.",
+  "Werknemer van de maand: de lobbyist, wederom.",
+  "Wist u dat gebakken lucht ook een goede belegging is?",
+  "Cesium-137 heeft geen recyclingtraject. Wij noemen het 'definitieve opslag'.",
+  "De Doomsday Klok tikt door. BIG AIR raadt aan er vooral niet naar te kijken.",
+  "Overleven is optioneel. Doneren niet.",
+  "We hebben nu ook een privéjet-vloot. Voor de duurzaamheid.",
+  "Uw overgebleven munten gaan bij faillissement niet naar ons. Helaas, echt.",
+  "Weer een mutant geboren - BIG AIR geeft vaccins de schuld",
+  "BIG AIR prijs voor de vrede gaat naar de Louche Afvalmakelaar",
+  "BIG AIR verschuift duurzaamheid op begroting door naar volgend jaar",
+  "Klimaatdoelen in het jaar 3000 kunnen we niet meer halen volgens CEO BIG AIR",
+];
+
+/* ============================= STATE ============================= */
+// per-leven (reset bij game over)
+let coins = 100;
+let donationTotal = 0;
+let doomsdayClock = CLOCK_START;
+let day = 1, tickInDay = 0;
+let isGameOver = false;
+let timesBoughtReserve = 0;
+let accumulatedIncomeGrowth = 0;
+let levels = {};
+UPGRADES.forEach(u=>levels[u.id]=0);
+let stock = {};
+Object.keys(SUBSTANCES).forEach(k=>stock[k]=0);
+
+// permanent (overleeft game over, alleen hard reset wist dit)
+let highscore = 0;
+let totalEarnedAll = 0;
+let totalDonatedAll = 0;
+let totalClicks = 0;
+let totalDeaths = 0;
+let longestSurvivalDays = 0;
+let everReachedPerfectAir = false;
+let everReachedZeroQuality = false;
+let everUnlocked = new Set();
+let everBuilt = new Set();
+let unlockedAchievements = new Set();
+
+let logEntries = [];
+let activeTab = "lucht";
+let resetConfirming = false;
+let hardResetting = false;
+let buyMultiplier = 1; // 1, 10, 25, of 'max'
+
+function addLog(msg){
+  logEntries.unshift(msg);
+  if(logEntries.length>6) logEntries.pop();
+  renderLog();
+}
+
+function earn(amount){
+  if(amount>0){ totalEarnedAll+=amount; }
+  coins += amount;
+}
+
+/* ============================= OPSLAAN / LADEN ============================= */
+async function loadGame(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+
+    if(raw){
+      const d = JSON.parse(raw);
+
+      coins = d.coins ?? 100;
+      donationTotal = d.donationTotal ?? 0;
+      doomsdayClock = d.doomsdayClock ?? CLOCK_START;
+      day = d.day ?? 1;
+      tickInDay = d.tickInDay ?? 0;
+      isGameOver = d.isGameOver ?? false;
+      timesBoughtReserve = d.timesBoughtReserve ?? 0;
+
+      levels = Object.assign(levels, d.levels || {});
+      stock = Object.assign(stock, d.stock || {});
+
+      // Inkomen per spel opnieuw opbouwen
+      accumulatedIncomeGrowth = d.accumulatedIncomeGrowth ?? 0;
+
+      highscore = d.highscore ?? 0;
+      totalEarnedAll = d.totalEarnedAll ?? 0;
+      totalDonatedAll = d.totalDonatedAll ?? 0;
+      totalClicks = d.totalClicks ?? 0;
+      totalDeaths = d.totalDeaths ?? 0;
+      longestSurvivalDays = d.longestSurvivalDays ?? 0;
+
+      everReachedPerfectAir = d.everReachedPerfectAir ?? false;
+      everReachedZeroQuality = d.everReachedZeroQuality ?? false;
+
+      everUnlocked = new Set(d.everUnlocked || []);
+      everBuilt = new Set(d.everBuilt || []);
+      unlockedAchievements = new Set(d.unlockedAchievements || []);
+
+      addLog("Voortgang geladen uit de wolken.");
+    } else {
+      // Volledig nieuw spel
+      accumulatedIncomeGrowth = 0;
+
+      addLog("Welkom, nieuwe ondernemer! De Doomsday Klok loopt al. Veel succes.");
+    }
+
+  }catch(e){
+    accumulatedIncomeGrowth = 0;
+
+    addLog("Welkom, nieuwe ondernemer! De Doomsday Klok loopt al. Veel succes.");
+  }
+}
+
+let saving = false;
+async function saveGame(){
+  if(saving || hardResetting) return;
+  saving = true;
+  try{
+    const payload = {
+      coins, donationTotal, doomsdayClock, day, tickInDay, isGameOver, timesBoughtReserve, levels, stock,
+      highscore, totalEarnedAll, totalDonatedAll, totalClicks, totalDeaths, longestSurvivalDays,
+      everReachedPerfectAir, everReachedZeroQuality, accumulatedIncomeGrowth,
+      everUnlocked:[...everUnlocked], everBuilt:[...everBuilt], unlockedAchievements:[...unlockedAchievements]
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+  }catch(e){ /* best effort */ }
+  saving = false;
+}
+
+async function hardReset(){
+  hardResetting = true;
+
+  try{
+    localStorage.removeItem(SAVE_KEY);
+  }catch(e){}
+
+  location.reload();
+}
+
+
+/* ============================= HELPERS ============================= */
+function isUnlocked(u){
+  if(!u.prereq) return true;
+  return levels[u.prereq.id] >= u.prereq.lvl;
+}
+function substanceUnlocked(id){
+  const s = SUBSTANCES[id];
+  if(!s.locked) return true;
+  if(everUnlocked.has(id)) return true;
+  return UPGRADES.some(u=>u.unlockSubstance===id && levels[u.id]>=1);
+}
+
+function unlockedSubstanceCount(){
+  return Object.keys(SUBSTANCES).filter(id=>substanceUnlocked(id)).length;
+}
+function levelCost(u, lvl){ return Math.round(u.baseCost * Math.pow(u.growth, lvl)); }
+function costForLevels(u, fromLvl, qty){
+  let total=0;
+  for(let i=0;i<qty;i++) total += levelCost(u, fromLvl+i);
+  return total;
+}
+function maxAffordableQty(u, budget){
+  const lvl = levels[u.id];
+  let qty=0, total=0;
+  while(true){
+    if(u.maxLevel && lvl+qty>=u.maxLevel) break;
+    const next = levelCost(u, lvl+qty);
+    if(total+next>budget) break;
+    total+=next; qty++;
+    if(qty>5000) break; // veiligheidsklep
+  }
+  return qty;
+}
+function resolveQty(u){
+  const lvl = levels[u.id];
+
+  const budget = u.substanceCost
+    ? (stock[u.substanceCost] || 0)
+    : coins;
+
+  let qty = buyMultiplier==='max'
+    ? maxAffordableQty(u, budget)
+    : buyMultiplier;
+
+  if(u.maxLevel) {
+    qty = Math.min(qty, Math.max(0, u.maxLevel-lvl));
+  }
+
+  return Math.max(0, qty);
+}
+
+function computeDerived(){
+  const s = {};
+  Object.keys(SUBSTANCES).forEach(k=>{ s[k]={rate:0}; });
+  s.coinsPerTick = 0;
+  s.convert = [];
+
+  const st = {
+    industryMult:1, globalIncomeMult:1, baseIncomeBonus:0,
+    labUnlocked:false, workerLevel:0, managerLevel:0, lobbyLevel:0, prLevel:0, legalLevel:0, aiLevel:0,
+    clickO2Bonus:0, clickN2Bonus:0, critChance:0, luckyChance:0, brokerDiscount:0,
+    clickMult:1, isolatieDiscount:0, donationMult:0, tickIncomeBonus:0, GoldChance:0,
+  };
+
+  // Alle multiplier-bonussen worden eerst centraal berekend.
+  // Daardoor maakt de volgorde van UPGRADES niet meer uit voor productie.
+  st.industryMult =
+    1
+    + 0.01 * levels.worker
+    + 0.02 * levels.manager
+    + 0.03 * levels.aiassistant
+    + 0.05 * levels.fusie
+    + 0.10 * levels.wereldexpansie;
+
+  // Filantropie is geen industrievermenigvuldiger, maar wordt om dezelfde
+  // reden centraal berekend: de bonus hangt niet meer af van de positie
+  // van de upgrade in de UPGRADES-lijst.
+  st.donationMult = 0.05 * levels.filantropie;
+
+  UPGRADES.forEach(u=>{
+    const lvl = levels[u.id];
+    if(lvl>0) u.effect(lvl, s, st);
+  });
+
+  UPGRADES.forEach(u=>{
+    if(u.unlockSubstance && levels[u.id]>=1) everUnlocked.add(u.unlockSubstance);
+  });
+
+  return {s, st};
+}
+
+function totalStockSum(){ let t=0; Object.keys(stock).forEach(k=>t+=stock[k]); return t; }
+
+function dumpCostMultiplier(st){
+
+  let mult = 1;
+
+  // Lobbyist: -1% per niveau, cumulatief
+  mult *= (1 - 0.01 * (st.lobbyLevel || 0));
+
+  // Juridisch Team: -2% per niveau, cumulatief
+  mult *= (1 - 0.02 * (st.legalLevel || 0));
+
+  // Vuilnis-astronaut: 1% exponentiële korting per niveau
+  mult *= Math.pow(0.99, st.trashAstronautLevel || 0);
+
+  return mult;
+}
+
+function dumpUnitCost(id, st){
+
+  let unit = SUBSTANCES[id].dumpBase * dumpCostMultiplier(st);
+
+  // Afvalmakelaar: -5% per niveau, cumulatief
+  // Alleen voor PFAS, Uranium, Plutonium en Cesium-137
+  if(
+    (id === "pfas" || id === "ur" || id === "pu" || id === "cs137") &&
+    st.brokerDiscount
+  ){
+    unit *= (1 - st.brokerDiscount);
+  }
+
+  return unit;
+}
+
+function reserveTimeCost(){ return Math.round(200 * Math.pow(1.5, timesBoughtReserve)); }
+
+/* ============================= GAME TICK ============================= */
+function tick(){
+  if(isGameOver) return;
+  const {s, st} = computeDerived();
+  window.__lastDerived = {s, st};
+
+  accumulatedIncomeGrowth += st.tickIncomeBonus;
+
+  const baseIncomePerTick =
+    (100 + st.baseIncomeBonus) / DAY_LENGTH_TICKS
+    + accumulatedIncomeGrowth;
+
+  earn(baseIncomePerTick * st.globalIncomeMult);
+
+  if(st.workerLevel>0){
+    const need = 0.5*st.workerLevel;
+    if(stock.o2 >= need){
+      stock.o2 -= need;
+      stock.co2 += 0.35*st.workerLevel;
+    }
+  }
+  if(st.aiLevel>0){
+    const need = 1*st.aiLevel;
+    if(stock.h2 >= need){
+      stock.h2 -= need;
+      stock.co2 += 0.8*st.aiLevel;
+    }
+  }
+
+  Object.keys(SUBSTANCES).forEach(id=>{
+    if(!substanceUnlocked(id)) return;
+    const rate = s[id].rate;
+    if(rate>0) stock[id] += rate;
+  });
+
+  earn(s.coinsPerTick * st.globalIncomeMult);
+
+  s.convert.forEach(cv=>{
+    const have = stock[cv.from] || 0;
+    const take = Math.min(have, cv.fromRate);
+    if(take<=0) return;
+    if(cv.upkeep){
+      if(coins < cv.upkeep) return;
+      coins -= cv.upkeep;
+    }
+    stock[cv.from] -= take;
+    const ratio = cv.fromRate>0 ? take/cv.fromRate : 0;
+    if(cv.to){ stock[cv.to] = (stock[cv.to]||0) + cv.toRate*ratio; }
+    if(cv.toCoins){ earn(cv.toCoins*ratio*st.globalIncomeMult); }
+  });
+
+  const quality = airQualityScore(st);
+  if(quality>=99) everReachedPerfectAir = true;
+  if(quality<=5) everReachedZeroQuality = true;
+
+  const decay = (MIN_DECAY + (1-quality/100)*(MAX_DECAY-MIN_DECAY)) * (1-(st.isolatieDiscount||0));
+  doomsdayClock -= decay;
+
+  tickInDay++;
+  if(tickInDay>=DAY_LENGTH_TICKS){
+    tickInDay=0; day++;
+    if(day>longestSurvivalDays) longestSurvivalDays=day;
+  }
+
+  if(doomsdayClock<=0){
+    doomsdayClock = 0;
+    triggerGameOver();
+  }
+
+  checkAchievements();
+  render();
+}
+
+/* ============================= ACTIES ============================= */
+function buyUpgrade(id){
+  if(isGameOver) return;
+
+  const u = UPGRADES.find(x=>x.id===id);
+  if(!u || !isUnlocked(u)) return;
+  if(u.maxLevel && levels[id]>=u.maxLevel) return;
+
+  const qty = resolveQty(u);
+  if(qty<=0) return;
+
+  const cost = costForLevels(u, levels[id], qty);
+
+  if(u.substanceCost){
+    const substance = u.substanceCost;
+
+    if((stock[substance] || 0) < cost) return;
+
+    stock[substance] -= cost;
+
+  }else{
+    if(coins < cost) return;
+
+    coins -= cost;
+  }
+
+  levels[id] += qty;
+  everBuilt.add(id);
+
+  const paymentText = u.substanceCost
+    ? `${cost.toLocaleString('nl-NL')} ${SUBSTANCES[u.substanceCost]?.name || u.substanceCost}`
+    : `${cost.toLocaleString('nl-NL')} munten`;
+
+  addLog(
+    `Gekocht: ${u.name} x${qty} (niveau ${levels[id]}) voor ${paymentText}.`
+  );
+
+  checkAchievements();
+  saveGame();
+  render();
+}
+function setBuyMultiplier(v){
+  buyMultiplier = (v==='max') ? 'max' : parseInt(v,10);
+  render();
+}
+
+function clickAir(){
+  if(isGameOver) return;
+
+  const {st} = computeDerived();
+
+  let o2Gain = (CLICK_BASE_O2 + st.clickO2Bonus) * st.clickMult;
+  let n2Gain = (CLICK_BASE_N2 + st.clickN2Bonus) * st.clickMult;
+  let arGain = CLICK_BASE_AR * st.clickMult;
+
+  let crit = false;
+
+  if(st.critChance>0 && Math.random() < st.critChance){
+    o2Gain *= 5;
+    n2Gain *= 5;
+    arGain *= 5;
+    crit = true;
+  }
+
+  stock.o2 += o2Gain;
+  stock.n2 += n2Gain;
+  stock.ar += arGain;
+
+  let luckyMsg = "";
+  if(st.luckyChance>0 && substanceUnlocked('he') && Math.random()<st.luckyChance){
+    stock.he += 0.5;
+    luckyMsg = " 🍀 Gelukstreffer: +0.5 Helium!";
+  }
+
+  let GoldMsg = "";
+  if(st.GoldChance>0 && Math.random()<st.GoldChance){
+    stock.golddust += 1;
+    GoldMsg = " 🏆 Gelukstreffer: +1 Goudstof!";
+  }
+
+  totalClicks++;
+
+  if(crit){
+    addLog(`💥 Kritieke klik! +${o2Gain.toFixed(1)} Zuurstof, +${n2Gain.toFixed(1)} Stikstof.${luckyMsg}${GoldMsg}`);
+  }
+  else if(luckyMsg || GoldMsg){
+    addLog(`${luckyMsg}${GoldMsg}`.trim());
+  }
+
+  checkAchievements();
+  render();
+}
+
+function buyReserveTime(){
+  if(isGameOver) return;
+  const cost = reserveTimeCost();
+  if(coins<cost) return;
+  coins -= cost;
+  doomsdayClock += 1;
+  timesBoughtReserve++;
+  addLog(`⏳ +1 dag op de klok gekocht voor ${cost} munten.`);
+  saveGame();
+  render();
+}
+
+function dumpSubstance(id){
+  if(isGameOver) return;
+  const {st} = computeDerived();
+  const unit = dumpUnitCost(id, st);
+  if(unit<=0 || stock[id]<=0) return;
+  const affordable = coins/unit;
+  const qty = Math.min(stock[id], affordable);
+  if(qty<=0) return;
+  coins -= qty*unit;
+  stock[id] -= qty;
+  addLog(`Geloosd: ${qty.toFixed(1)} ${SUBSTANCES[id].name} voor ${(qty*unit).toFixed(1)} munten.`);
+  saveGame();
+  render();
+}
+
+function dumpAllPollution(){
+  if(isGameOver) return;
+  const {st} = computeDerived();
+  let totalCost=0, totalQty=0;
+  Object.keys(SUBSTANCES).forEach(id=>{
+    if(SUBSTANCES[id].type!=="dirty" || !substanceUnlocked(id)) return;
+    const unit = dumpUnitCost(id, st);
+    if(unit<=0 || stock[id]<=0) return;
+    const affordable = coins/unit;
+    const qty = Math.min(stock[id], affordable);
+    if(qty<=0) return;
+    coins -= qty*unit;
+    stock[id] -= qty;
+    totalCost += qty*unit; totalQty += qty;
+  });
+  if(totalQty>0) addLog(`Bulk-lozing: ${totalQty.toFixed(1)} liter vervuiling verwijderd voor ${totalCost.toFixed(1)} munten.`);
+  saveGame();
+  render();
+}
+
+function donate(amount){
+  if(isGameOver) return;
+  if(coins < amount) return;
+  const {st} = computeDerived();
+  coins -= amount;
+  const credited = amount * (1+(st.donationMult||0));
+  const before = currentTier(donationTotal);
+  donationTotal += credited;
+  totalDonatedAll += credited;
+  if(donationTotal>highscore) highscore = donationTotal;
+  const after = currentTier(donationTotal);
+  if(after.at !== before.at) addLog(`Nieuwe status bereikt: ${after.medal} ${after.title}!`);
+  else addLog(`${amount.toLocaleString('nl-NL')} munten gedoneerd aan BIG AIR (+${credited.toFixed(1)} score).`);
+  checkAchievements();
+  saveGame();
+  render();
+}
+function currentTier(total){
+  let t = DONATION_TIERS[0];
+  DONATION_TIERS.forEach(tier=>{ if(total>=tier.at) t=tier; });
+  return t;
+}
+
+function triggerGameOver(){
+  isGameOver = true;
+  totalDeaths++;
+  if(donationTotal>highscore) highscore = donationTotal;
+  addLog(`💀 De Doomsday Klok bereikte 0. Uw bedrijf is ten onder gegaan aan de eigen lucht. Dit leven: ${Math.floor(donationTotal).toLocaleString('nl-NL')} munten gedoneerd.`);
+  checkAchievements();
+  saveGame();
+}
+
+function startNewRun(){
+
+  coins = 100;
+
+  stock = {};
+  Object.keys(SUBSTANCES).forEach(k=>stock[k]=0);
+
+  levels = {};
+  UPGRADES.forEach(u=>levels[u.id]=0);
+
+  donationTotal = 0;
+
+  doomsdayClock = CLOCK_START;
+
+  day = 1;
+  tickInDay = 0;
+
+  timesBoughtReserve = 0;
+
+  // Belangrijk: cumulatieve inkomensgroei van het vorige spel wissen
+  accumulatedIncomeGrowth = 0;
+
+  isGameOver = false;
+
+  addLog("🔁 Nieuwe poging gestart. De klok loopt weer.");
+
+  saveGame();
+  render();
+}
+
+function requestHardReset(){
+  if(!resetConfirming){ resetConfirming=true; render(); return; }
+  hardReset();
+}
+function cancelHardReset(){ resetConfirming=false; render(); }
+
+function checkAchievements(){
+  const ctx = { totalEarnedAll, totalDonatedAll, everBuilt, everUnlockedSize: everUnlocked.size,
+    totalClicks, totalDeaths, longestSurvivalDays, highscore, everReachedPerfectAir, everReachedZeroQuality };
+  let changed = false;
+  ACHIEVEMENTS.forEach(a=>{
+    if(!unlockedAchievements.has(a.id) && a.check(ctx)){
+      unlockedAchievements.add(a.id);
+      addLog(`🏅 Badge behaald: ${a.name}!`);
+      changed = true;
+    }
+  });
+  if(changed) saveGame();
+}
+
+/* ============================= WEERGAVE ============================= */
+function airQualityScore(st){
+  const total = totalStockSum();
+  if(total<=0) return 100;
+  let weighted = 0;
+  Object.keys(SUBSTANCES).forEach(id=>{
+    const meta = SUBSTANCES[id];
+    if(meta.type!=="dirty") return;
+    const pct = stock[id]/total;
+    if(pct<=0) return;
+    weighted += pct*meta.badness;
+  });
+  let score = 100 - (weighted/NORM_BADNESS)*100;
+  score += (st.prLevel||0)*0.1;
+  return Math.max(0, Math.min(100, score));
+}
+function meterLabelFor(score){
+  if(score>=90) return "Uitstekend 🌿 (onze cijfers liegen niet)";
+  if(score>=70) return "Goed genoeg 👍";
+  if(score>=50) return "Acceptabel volgens onze normen";
+  if(score>=30) return "Zorgwekkend, maar winstgevend";
+  if(score>=10) return "Rampzalig (aandeelhouders zijn wel blij)";
+  return "Compleet verwoest 💀 (nog steeds duurzaam volgens ons jaarverslag)";
+}
+
+function buildTabs(){
+  const tabsEl = document.getElementById('tabs');
+  const defs = [
+    {id:"lucht", label:"🌬️ Lucht"},
+    {id:"klikker", label:"👆 Klikken"},
+    {id:"industrie", label:"🏭 Industrie"},
+    {id:"grondstoffenindustrie", label:"💨 Grondstoffenindustrie"},
+    {id:"personeel", label:"👷 Personeel"},
+    {id:"financien", label:"💰 Financiën"},
+    {id:"onderzoek", label:"🔬 Onderzoek"},
+    {id:"overleving", label:"⏳ Overleving"},
+    {id:"donaties", label:"🏆 Donaties"},
+    {id:"statistieken", label:"📊 Statistieken"},
+  ];
+  tabsEl.innerHTML = defs.map(d=>`<button class="tab-btn ${activeTab===d.id?'active':''}" data-tab="${d.id}">${d.label}</button>`).join('');
+  tabsEl.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ activeTab=btn.dataset.tab; render(); });
+  });
+}
+
+function renderLuchtPanel(st){
+  const total = totalStockSum();
+  const present = Object.keys(SUBSTANCES).filter(id=>substanceUnlocked(id) && stock[id]>0.001).sort((a,b)=>stock[b]-stock[a]);
+
+  const segHtml = present.map(id=>{
+    const pct = total>0 ? (stock[id]/total*100) : 0;
+    return `<div class="tank-seg" style="width:${pct}%;background:${SUBSTANCES[id].color};" title="${SUBSTANCES[id].name}: ${pct.toFixed(1)}%"></div>`;
+  }).join('') || '<div class="tank-seg" style="width:100%;background:#e8f0f2;"></div>';
+
+  const cleanIds = present.filter(id=>SUBSTANCES[id].type==="clean");
+  const cleanLegend = cleanIds.map(id=>{
+    const pct = (stock[id]/total*100).toFixed(1);
+    return `<div class="legend-item"><span class="swatch" style="background:${SUBSTANCES[id].color}"></span>${SUBSTANCES[id].icon} ${SUBSTANCES[id].name}: <b>${pct}%</b> (${stock[id].toFixed(1)} L)</div>`;
+  }).join('') || '<div class="legend-item">Nog geen schone lucht verzameld.</div>';
+
+  const dirtyIds = present.filter(id=>SUBSTANCES[id].type==="dirty");
+  const dirtyGrid = dirtyIds.map(id=>{
+    const meta = SUBSTANCES[id];
+    const unit = dumpUnitCost(id, st);
+    const pct = (stock[id]/total*100).toFixed(1);
+    const cost = Math.min(stock[id], unit>0 ? coins/unit : 0)*unit;
+    return `<div class="card">
+      <h4><span class="icon">${meta.icon}</span> ${meta.name}${meta.radioactive?' ☢️':''}</h4>
+      <div class="desc">${pct}% van uw lucht · ${stock[id].toFixed(1)} L · ${unit.toFixed(2)} munt/L om te lozen</div>
+      <button class="dump" onclick="dumpSubstance('${id}')" ${stock[id]<=0?'disabled':''}>Loos (kost ${cost.toFixed(1)})</button>
+    </div>`;
+  }).join('') || '<div class="card"><div class="desc">Nog geen vervuiling geproduceerd. Goed zo — voorlopig.</div></div>';
+
+  return `
+  <div class="tank-card">
+    <h3 style="margin-top:0;">🛢️ Verzamelde Lucht <span style="font-size:12px;font-weight:normal;">— ${total.toFixed(1)} liter totaal, geen limiet</span></h3>
+    <div class="tank-bar-outer">${segHtml}</div>
+    <div class="section-title">Schone lucht <span style="font-weight:normal;font-size:10.5px;color:#6c7a80;">(niet verkoopbaar — puur voor verzameling en samenstelling)</span></div>
+    <div class="legend">${cleanLegend}</div>
+  </div>
+  <div class="tank-card">
+    <div class="verwerk-row">
+      <h3 style="margin:0;">☣️ Vervuiling</h3>
+      <button class="verwerk-btn" onclick="dumpAllPollution()" ${dirtyIds.length===0?'disabled':''}>🚚 Loos alle vervuiling</button>
+    </div>
+    <div class="verwerk-note">Lozen kost geld, maar verbetert uw luchtkwaliteitsindex — en dus hoe snel de Doomsday Klok aftikt. Zonder limiet op de tank bent u nooit verplicht, maar wel gewaarschuwd.</div>
+    <div class="grid" style="margin-top:10px;">${dirtyGrid}</div>
+  </div>`;
+}
+
+function renderKlikkerPanel(st){
+  const o2Gain = (CLICK_BASE_O2 + st.clickO2Bonus) * st.clickMult;
+  const n2Gain = (CLICK_BASE_N2 + st.clickN2Bonus) * st.clickMult;
+
+  const critPct = st.critChance * 100;
+  const luckyPct = (st.luckyChance || 0) * 100;
+  const GoldPct = (st.GoldChance || 0) * 100;
+
+  // Alleen voor nette weergave; de daadwerkelijke kans blijft ongewijzigd
+  const critPctDisplay = parseFloat(critPct.toFixed(10));
+  const luckyPctDisplay = parseFloat(luckyPct.toFixed(10));
+  const GoldPctDisplay = parseFloat(GoldPct.toFixed(10));
+
+  let html = `<div class="clicker-card">
+    <button class="click-btn" onclick="clickAir()">👆 Klik voor lucht!</button>
+
+    <div class="click-info">
+      +${o2Gain.toFixed(1)} 🫧 Zuurstof &nbsp;
+      +${n2Gain.toFixed(1)} 💨 Stikstof per klik
+      ${critPct>0 ? ` &nbsp; (${critPctDisplay}% kans op x5 kritieke klik)` : ''}
+      ${luckyPct>0 ? ` &nbsp; (${luckyPctDisplay}% kans op bonus Helium)` : ''}
+      ${GoldPct>0 ? ` &nbsp; (${GoldPctDisplay}% kans op bonus Goudstof)` : ''}
+    </div>
+  </div>`;
+
+  html += renderUpgradeCategory('klikker');
+
+  return html;
+}
+function renderOverlevingPanel(st){
+  const cost = reserveTimeCost();
+  let html = `<div class="tank-card">
+    <h3 style="margin-top:0;">⏳ Doomsday Klok beheer</h3>
+    <div class="prestige-stat">Isolatiesysteem vertraagt de aftik momenteel met <b>${((st.isolatieDiscount||0)*100).toFixed(0)}%</b>.</div>
+    <div class="verwerk-row">
+      <div style="font-size:12px;">Reservetijd inkopen: direct <b>+1 dag</b> op de klok (kost steeds meer per keer, deze poging).</div>
+      <button class="verwerk-btn" style="background:var(--blue);" onclick="buyReserveTime()" ${coins<cost?'disabled':''}>Koop voor ${cost.toLocaleString('nl-NL')} munten</button>
+    </div>
+  </div>`;
+  html += renderUpgradeCategory('overleving');
+  return html;
+}
+
+function renderBuyBar(){
+  const opts = [1,10,25,'max'];
+  return `<div class="buybar">Koop:
+    ${opts.map(o=>`<button class="buybar-btn ${buyMultiplier===o?'active':''}" onclick="setBuyMultiplier('${o}')">${o==='max'?'Max':'x'+o}</button>`).join('')}
+  </div>`;
+}
+
+function renderUpgradeCategory(cat){
+  let html = renderBuyBar() + '<div class="grid">';
+
+  UPGRADES.filter(u=>u.cat===cat).forEach(u=>{
+    const unlocked = isUnlocked(u);
+    const lvl = levels[u.id];
+    const maxed = u.maxLevel && lvl>=u.maxLevel;
+
+    const qty = maxed ? 0 : resolveQty(u);
+    const cost = qty>0 ? costForLevels(u, lvl, qty) : 0;
+
+    const resourceId = u.substanceCost;
+    const resourceName = resourceId
+      ? (SUBSTANCES[resourceId]?.name || resourceId)
+      : 'munten';
+
+    const budget = resourceId
+      ? (stock[resourceId] || 0)
+      : coins;
+
+    const afford = qty>0 && cost<=budget;
+
+    const lockText = !unlocked
+      ? `🔒 Vereist: ${UPGRADES.find(x=>x.id===u.prereq.id).name} niv. ${u.prereq.lvl}`
+      : '';
+
+    const costText = resourceId
+      ? `${cost.toLocaleString('nl-NL')} ${resourceName}`
+      : `${cost.toLocaleString('nl-NL')} munten`;
+
+    html += `<div class="card ${unlocked?'':'locked'}">
+      <div class="level-tag">Niv. ${lvl}${u.maxLevel?'/'+u.maxLevel:''}</div>
+      <h4><span class="icon">${u.icon}</span> ${u.name}</h4>
+      <div class="desc">${u.desc}</div>
+      ${u.stat ? `<div class="stat-line">${u.stat}</div>` : ''}
+
+      ${unlocked ? `<button onclick="buyUpgrade('${u.id}')" ${(!afford||maxed||qty<=0)?'disabled':''}>
+          ${maxed
+            ? 'Maximaal'
+            : (qty<=0
+              ? `Niet genoeg ${resourceName}`
+              : `Koop x${qty} voor ${costText}`)}
+        </button>`
+        : `<div class="locktag">${lockText}</div>`}
+    </div>`;
+  });
+
+  html += '</div>';
+  return html;
+}
+function renderDonaties(st){
+  const tier = currentTier(donationTotal);
+  const bonusPct = Math.round((st.donationMult||0)*100);
+  let html = `<div class="titlebanner" style="background:${tier.bg}">
+    <div class="medal">${tier.medal}</div>
+    <h2>${tier.title}</h2>
+    <p>Dit leven gedoneerd aan BIG AIR: ${Math.floor(donationTotal).toLocaleString('nl-NL')} munten</p>
+  </div>
+  <div class="donate-buttons">`;
+  DONATE_AMOUNTS.forEach(a=>{ 
+  const amount = a === "max" ? coins : a;
+  html += `<button onclick="donate(${amount})" ${coins<amount?'disabled':''}>${a === "max" ? "Doneer alles" : "Doneer " + a.toLocaleString('nl-NL')}</button>`; 
+});
+  html += `</div>`;
+  if(bonusPct>0) html += `<div class="verwerk-note">Uw fiscale constructies geven momenteel +${bonusPct}% score per gedoneerde munt.</div>`;
+  html += `<div class="section-title">Erekast (all-time record: ${Math.floor(highscore).toLocaleString('nl-NL')} munten)</div><div class="trophyshelf">`;
+  DONATION_TIERS.forEach(t=>{
+    if(t.at===0) return;
+    const un = highscore>=t.at;
+    html += `<div class="trophy ${un?'unlocked':''}" title="${t.title}">${t.medal}<span>${t.at.toLocaleString('nl-NL')}</span></div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderStatistieken(){
+  let html = `<div class="tank-card">
+    <h3 style="margin-top:0;">📊 Statistieken</h3>
+    <div class="stat-list">
+      Record (hoogste donatie in één leven): <b>${Math.floor(highscore).toLocaleString('nl-NL')}</b> munten<br>
+      Totaal ooit gedoneerd: <b>${Math.floor(totalDonatedAll).toLocaleString('nl-NL')}</b> munten<br>
+      Totaal verdiend (lifetime): <b>${Math.floor(totalEarnedAll).toLocaleString('nl-NL')}</b> munten<br>
+      Aantal levens verloren: <b>${totalDeaths}</b><br>
+      Langste overleving: <b>${longestSurvivalDays}</b> dagen<br>
+      Aantal klikken: <b>${totalClicks.toLocaleString('nl-NL')}</b><br>
+      Stoffen ontdekt: <b>${unlockedSubstanceCount()} / ${Object.keys(SUBSTANCES).length}</b><br>
+      Huidige poging — dag: <b>${day}</b>
+    </div>
+  </div>`;
+  html += `<div class="tank-card"><h3 style="margin-top:0;">🏅 Badges (${unlockedAchievements.size}/${ACHIEVEMENTS.length})</h3><div class="ach-grid">`;
+  ACHIEVEMENTS.forEach(a=>{
+    const un = unlockedAchievements.has(a.id);
+    html += `<div class="ach-card ${un?'unlocked':''}"><h5>${un?a.icon:'🔒'} ${a.name}</h5>${a.desc}</div>`;
+  });
+  html += `</div></div>`;
+  html += `<div class="tank-card"><h3 style="margin-top:0;">⚙️ Spelbeheer</h3>
+    <div style="font-size:11.5px;color:#5a6a71;">Wilt u helemaal opnieuw beginnen, inclusief record en badges? Dit kan niet ongedaan worden gemaakt.</div>`;
+  if(!resetConfirming){
+    html += `<button class="reset-btn" onclick="requestHardReset()">Nieuw spel starten</button>`;
+  } else {
+    html += `<button class="reset-btn" onclick="requestHardReset()">Ja, alles wissen</button>
+             <button class="reset-btn" style="background:#9aa5ab;" onclick="cancelHardReset()">Annuleren</button>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderGameOverScreen(){
+  const isRecord = donationTotal>=highscore && donationTotal>0;
+  return `<div class="prestige-card">
+    <h2 style="margin-top:0;">💀 GAME OVER</h2>
+    <p>De Doomsday Klok bereikte 0. Uw lucht heeft u de das omgedaan.</p>
+    <div class="prestige-stat">Dit leven gedoneerd aan BIG AIR: <b>${Math.floor(donationTotal).toLocaleString('nl-NL')}</b> munten</div>
+    <div class="prestige-stat">${isRecord ? '🎉 Dit is een nieuw record!' : `Uw record staat op ${Math.floor(highscore).toLocaleString('nl-NL')} munten.`}</div>
+    <div class="prestige-stat" style="font-size:10.5px;color:#6c7a80;">Uw overgebleven munten (${Math.floor(coins).toLocaleString('nl-NL')}) gaan niet meer naar BIG AIR.</div>
+    <div class="prestige-stat" style="font-size:10.5px;color:#6c7a80;">U overleefde ${day} dagen. Badges en record blijven behouden voor de volgende poging.</div>
+    <button class="ipo-btn" onclick="startNewRun()">🔁 Nieuwe Poging</button>
+  </div>`;
+}
+
+function renderLog(){
+  const el = document.getElementById('logbox');
+  el.innerHTML = logEntries.map(l=>`<div>${l}</div>`).join('') || '<div>Nog geen activiteit.</div>';
+}
+
+function render(){
+  const {st} = window.__lastDerived || computeDerived();
+
+  document.getElementById('coinAmt').textContent = Math.floor(coins).toLocaleString('nl-NL') + " munten";
+  const currentBasePerDay =
+    (
+      (100 + (st.baseIncomeBonus || 0)) / DAY_LENGTH_TICKS
+      + accumulatedIncomeGrowth
+    )
+    * DAY_LENGTH_TICKS
+    * st.globalIncomeMult;
+
+  const s2 = computeDerived().s;
+
+  const totalPerDay =
+    currentBasePerDay
+    + s2.coinsPerTick * st.globalIncomeMult * DAY_LENGTH_TICKS;
+  document.getElementById('coinRate').textContent = "+" + totalPerDay.toFixed(1) + " / dag";
+  document.getElementById('dayLabel').textContent = "Dag " + day;
+  document.getElementById('recordAmt').textContent = "🏆 " + Math.floor(highscore).toLocaleString('nl-NL') + " munten";
+  document.getElementById('companyLevel').textContent = "🏢 " + currentTier(donationTotal).title;
+
+  const score = airQualityScore(st);
+  const hasRadioactive = Object.keys(SUBSTANCES).some(id=>SUBSTANCES[id].radioactive && stock[id]>0.001);
+  document.getElementById('meterFill').style.width = (100-score) + "%";
+  document.getElementById('meterLabel').textContent = (hasRadioactive?'☢️ ':'') + meterLabelFor(score) + " — " + score.toFixed(0) + "/100";
+  const meterCardEl = document.getElementById('meterCard');
+  if(meterCardEl.classList) meterCardEl.classList.toggle('radioactive-glow', hasRadioactive);
+
+  const clockPct = Math.max(0, Math.min(100, (doomsdayClock/CLOCK_START)*100));
+  const decay = (MIN_DECAY + (1-score/100)*(MAX_DECAY-MIN_DECAY)) * (1-(st.isolatieDiscount||0));
+  document.getElementById('doomsdayFill').style.width = clockPct + "%";
+  document.getElementById('doomsdayFill').style.background = clockPct>50 ? 'var(--green)' : (clockPct>20 ? 'var(--yellow)' : 'var(--red)');
+  document.getElementById('doomsdayLabel').textContent = Math.max(0,doomsdayClock).toFixed(1) + " dagen resterend";
+  document.getElementById('doomsdayNote').textContent = `Huidige aftiksnelheid: ${(decay*DAY_LENGTH_TICKS).toFixed(2)} dagen per in-game dag. Bij 0 is het voorbij.`;
+  const doomsdayCardEl = document.getElementById('doomsdayCard');
+  if(doomsdayCardEl.classList) doomsdayCardEl.classList.toggle('doomsday-critical', clockPct<15 && !isGameOver);
+
+  const tabsEl = document.getElementById('tabs');
+  const panelsEl = document.getElementById('panels');
+  if(isGameOver){
+    tabsEl.innerHTML = '';
+    panelsEl.innerHTML = renderGameOverScreen();
+    return;
+  }
+
+  buildTabs();
+  let html = '<div class="panel active">';
+  if(activeTab==="lucht") html += renderLuchtPanel(st);
+  else if(activeTab==="klikker") html += renderKlikkerPanel(st);
+  else if(activeTab==="overleving") html += renderOverlevingPanel(st);
+  else if(activeTab==="donaties") html += renderDonaties(st);
+  else if(activeTab==="statistieken") html += renderStatistieken();
+  else html += renderUpgradeCategory(activeTab);
+  html += '</div>';
+  panelsEl.innerHTML = html;
+}
+
+/* ============================= NIEUWSTICKER ============================= */
+function rotateNews(){
+  const el = document.getElementById('newsText');
+  const msg = NEWS[Math.floor(Math.random()*NEWS.length)];
+  el.style.opacity=0;
+  setTimeout(()=>{ el.textContent = msg; el.style.opacity=1; }, 300);
+}
+
+/* ============================= INIT ============================= */
+function spawnClouds(){
+  for(let i=0;i<4;i++){
+    const c = document.createElement('div');
+    c.className = 'cloud pixel-cloud';
+    c.style.top = (10 + i*18) + '%';
+    c.style.animationDuration = (40 + i*15) + 's';
+    c.style.animationDelay = (-i*10) + 's';
+    document.body.appendChild(c);
+  }
+}
+
+async function init(){
+  spawnClouds();
+  await loadGame();
+  render();
+  setInterval(tick, TICK_MS);
+  setInterval(rotateNews, 7000);
+  setInterval(saveGame, 8000);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden') saveGame();
+  });
+  window.addEventListener('pagehide', ()=>saveGame());
+  document.getElementById('newsText').style.transition = 'opacity 0.3s ease';
+}
+init();
+</script>
+</body>
+</html>
